@@ -1,0 +1,31 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  
+  <f:entry title="Log path" field="pathToLogPathDir">
+    <f:textbox  default="./" />
+  </f:entry>
+  
+  
+  
+  <f:entry title="Command checkout passing version" field="shellCheckoutPassing">
+    <f:textbox />
+  </f:entry>
+  
+  <f:entry title="Path to jar passing version" field="pathToJarPassingVersion">
+    <f:textbox default="./"/>
+  </f:entry>
+  
+  <f:entry title="Path to jar failing version" field="pathToJarFailingVersion">
+    <f:textbox default="./"/>
+  </f:entry>
+  
+  <f:entry title="Passing version: command run test on instrumented jar" field="shellRunTestPassingVersion">
+    <f:textbox />
+  </f:entry>
+  
+   <f:entry title="Failing version: command run test on instrumented jar" field="shellRunTestFailingVersion">
+    <f:textbox />
+  </f:entry>
+  
+  
+
+</j:jelly>
