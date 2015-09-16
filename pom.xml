@@ -56,7 +56,7 @@
      <dependency>
           <groupId>de.hdu.pvs</groupId>
           <artifactId>crashFinder</artifactId>
-          <version>1.0</version>
+          <version>1.0.0-SNAPSHOT</version>
        <type>jar</type>
      </dependency>
       <dependency>

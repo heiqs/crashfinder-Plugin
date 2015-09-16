@@ -1,2 +1,10 @@
 *~
-.class
+*.class
+*.jar
+/bin
+/target
+.idea
+*.iml
+.classpath
+.project
+.settings
