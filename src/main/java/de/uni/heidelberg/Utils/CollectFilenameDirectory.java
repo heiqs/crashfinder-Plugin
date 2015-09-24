@@ -77,4 +77,32 @@ public class CollectFilenameDirectory {
         }
         return mapFilenameAbsPath;
     }
+    
+    public static ArrayList<String> collectAbsPathDir(String pathToParentDir)
+    {
+        ArrayList<String> listAbsPath = new ArrayList<String>();
+        
+        File fileParentDir = new File(pathToParentDir);
+        File[] fList = fileParentDir.listFiles();
+        for (File file : fList) 
+        {
+            String filename = file.getName();
+            String absPathFile = file.getAbsolutePath();
+             if (file.isFile() && file.isHidden()== false ) 
+                {
+                    if(listAbsPath.contains(absPathFile)==false)
+                    {
+                        listAbsPath.add(absPathFile);
+                    }
+		} else if (file.isDirectory()) {
+                    if(listAbsPath.contains(absPathFile) == false)
+                    {
+                        listAbsPath.add(absPathFile);
+                    }
+		}
+            
+        }
+        return listAbsPath;
+    }
+    
 }
