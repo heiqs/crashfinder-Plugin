@@ -168,7 +168,7 @@ public class CrashFinderGettingOlderVersion implements FilePath.FileCallable {
         
         if(this.behaviour.equals("Number") == true && this.git.equals("true") == true && this.gitNumberCommit.equals("")== false)
         {
-                listener.getLogger().println("Git miditra ato");
+                
                 String command = "git checkout HEAD~1";
                 CommandInterpreter runner = new Shell(command);
                 int repetitions = Integer.parseInt(this.gitNumberCommit);
