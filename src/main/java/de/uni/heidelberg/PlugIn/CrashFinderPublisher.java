@@ -257,12 +257,14 @@ public final class CrashFinderPublisher extends Notifier {
                 
                 
                 //replace rel path to abs path
-                String absPathLogDir = GettingAbsPathFile.getAbsPath(this.pathToLogPathDir, pathToWorkspace);
-                String absPathJarPassing = GettingAbsPathFile.getAbsPath(this.pathToJarPassingVersion, pathToWorkspace);
-                String absPathJarFailing = GettingAbsPathFile.getAbsPath(this.pathToJarFailingVersion, pathToWorkspace);
-                String absPathSrcFileSystem = GettingAbsPathFile.getAbsPath(this.pathToSrcFileSystem, pathToWorkspace);
-                String absPathToCrashFinderJar = GettingAbsPathFile.getAbsPath(this.pathToCrashFinderJar, pathToWorkspace);
-                String absPathToTestsJar = GettingAbsPathFile.getAbsPath(this.pathToTestsJar, pathToWorkspace);
+                FilePathAbsolutizer absolutizer = new FilePathAbsolutizer
+                        (pathToWorkspace);
+                String absPathLogDir = absolutizer.absolutize(this.pathToLogPathDir);
+                String absPathJarPassing = absolutizer.absolutize(this.pathToJarPassingVersion);
+                String absPathJarFailing = absolutizer.absolutize(this.pathToJarFailingVersion);
+                String absPathSrcFileSystem = absolutizer.absolutize(this.pathToSrcFileSystem);
+                String absPathToCrashFinderJar = absolutizer.absolutize(this.pathToCrashFinderJar);
+                String absPathToTestsJar = absolutizer.absolutize(this.pathToTestsJar);
 
                 
                 listener.getLogger().println("Abs path dir: " + absPathLogDir);
@@ -312,7 +314,7 @@ public final class CrashFinderPublisher extends Notifier {
                             .collectFilenameDir(pathToWorkspace);
 
                     //Create log directory
-                    //String absPathToLogDir = GettingAbsPathFile.getAbsPath(this.pathToLogPathDir, pathToWorkspace);
+                    //String absPathToLogDir = absolutizer.absolutize(this.pathToLogPathDir);
                     CrashFinderLogger logger = new CrashFinderLogger(absPathLogDir);
                     listener.getLogger().println("Path to log directory: " + absPathLogDir);
 

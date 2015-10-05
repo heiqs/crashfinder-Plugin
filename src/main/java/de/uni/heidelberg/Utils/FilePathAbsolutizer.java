@@ -30,21 +30,32 @@ import java.io.IOException;
  *
  * @author antsaharinala
  */
-public class GettingAbsPathFile {
-    
+public class FilePathAbsolutizer {
+
+    private final String basePath;
+
+    public FilePathAbsolutizer(String basePath) {
+        this.basePath = basePath;
+    }
+
     /**
      * absPathDefault without /
      * @param relativePath
      * @param absPathDefault
      * @return 
      */
-    public static String getAbsPath(String inputPath, String absPathDefaultPath) throws IOException {
+    public String absolutize(String inputPath) throws IOException {
         File inputFile = new File(inputPath);
         if (inputFile.isAbsolute()) {
             return inputPath;
         } else {
-            return new File(absPathDefaultPath, inputPath).getCanonicalPath();
+            return new File(this.basePath, inputPath)
+                    .getCanonicalPath();
         }
     }
-    
+
+    public String getBasePath() {
+        return basePath;
+    }
+
 }
