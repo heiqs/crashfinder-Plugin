@@ -118,7 +118,7 @@ public class JenkinsCrashFinderRunner implements CrashFinderRunner{
                         output.printf("%s\r\n", strFound);
                     }
                 }
-            } catch (IOException e) 
+            } catch (IOException e)
             {
             } finally {
                 if (output != null) {

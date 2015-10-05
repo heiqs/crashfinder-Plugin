@@ -95,12 +95,12 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
     {
         return this.pathToJarFile;
     }
-    
+
     public String getPathToInstrumentedJarFile()
     {
         return this.pathToInstrumentedJarFile;
     }
-    
+
     public String getPathToStackTrace()
     {
         return this.pathToStackTrace;
@@ -114,27 +114,29 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
     {
         this.pathToDiffOut = pathToDiffOut;
     }
-    
+
     public void setPathToLogDiff(String pathToLogDiff)
     {
         this.pathToLogDiff = pathToLogDiff;
     }
-    
+
     public void setPathToJarFile(String pathToJarFile)
     {
         this.pathToJarFile = pathToJarFile;
     }
-    
+
     public void setPathToInstrumentedJar(String pathToInstrumentedJar)
     {
         this.pathToInstrumentedJarFile = pathToInstrumentedJar;
     }
-    
+
     public void setPathToStackTrace(String pathToStackTrace)
     {
         this.pathToStackTrace = pathToStackTrace;
     }
-    
+
+
+
     @Override
     public Slicing initializeSlicing(final String jar)
     {
@@ -166,7 +168,7 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
 		//} catch (IOException e) {
 		//	listener.getLogger().println(e.getStackTrace());
 		//}
-        
+
                // now the actual slicing
 		Slicing helper = null;
                 helper = new Slicing(jar, "", pathToExclusionFile);
@@ -175,22 +177,20 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
 		helper.setControlDependenceOptions(ControlDependenceOptions.NO_EXCEPTIONAL_EDGES);
 		helper.setContextSensitive(true); // context-insensitive
 		return helper;
-                
+
     }
-    
-    
-    
+
     public Collection<? extends Statement> backWardSlicing(Statement seedStatement, Slicing helper)
     {
         try {
 		return helper.computeSlice(seedStatement);
-                
+
             } catch (CancelException e) {
 		e.printStackTrace();
 		return null;
             }
     }
-    
+
     @Override
     public Statement findSeedStatement(String pathToStackTrace, Slicing slicing)throws IOException
     {
@@ -209,8 +209,8 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
 			return null;
 		}
     }
-        
-    public void instrument(String pathToJar, String pathToInstrJar, Collection<Statement> intersection) 
+
+    public void instrument(String pathToJar, String pathToInstrJar, Collection<Statement> intersection)
     {
         if (intersection.isEmpty()) {
             throw new IllegalArgumentException("Cannot instrument: " +
@@ -222,19 +222,20 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
 				output1);
 		try {
 			instrumenter.instrument(pathToJar,pathToInstrJar);
-							
+
 		}catch (Exception e) {
 			listener.getLogger().println(e.getMessage());
 		}
 		InstrumentStats.showInstrumentationStats();
     }
 
+
     @Override
     //public Collection<Statement> intersection(List<String> diff, Collection<? extends Statement> passingSlice) {
     //    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     //}
     public Collection<Statement> intersection(List<String> diff,
-			Collection<? extends Statement> slice) 
+			Collection<? extends Statement> slice)
     {
         if (diff.isEmpty()) {
             throw new IllegalArgumentException("Cannot intersect with empty " +
@@ -263,8 +264,8 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
 		return sliceDiff;
     }
 
- 
-    private Collection<? extends Statement> backwardSlice(Statement seedStatement, Slicing helper) 
+
+    private Collection<? extends Statement> backwardSlice(Statement seedStatement, Slicing helper)
     {
 	try {
 		return helper.computeSlice(seedStatement);
@@ -273,9 +274,4 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
 		return null;
             }
     }
-
-    
-
-  
-    
 }
