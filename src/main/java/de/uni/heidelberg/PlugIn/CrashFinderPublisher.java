@@ -22,6 +22,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
@@ -554,6 +555,21 @@ public final class CrashFinderPublisher extends Notifier {
                     listener.getLogger().println("Command re-run test failing version: " + commandTestFailingVersion);
                     CommandInterpreter runnerTestInstrFailing = new Shell(commandTestFailingVersion);
                     runnerTestInstrFailing.perform(build, launcher, listener);
+
+                    String[] dumpFileNames = new File(pathToWorkspace).list
+                            (new FilenameFilter() {
+                        @Override
+                        public boolean accept(File dir, String name) {
+                            return name.startsWith("stmts_dump_");
+                        }
+                    });
+                    Arrays.sort(dumpFileNames);
+                    File passingDumpFile = new File(pathToWorkspace,
+                            dumpFileNames[0]);
+                    File failingDumpFile = new File(pathToWorkspace,
+                            dumpFileNames[1]);
+                    build.addAction(new ShowDumpsAction(passingDumpFile,
+                            failingDumpFile));
 
                     FileUtils.deleteDirectory(new File(absPathFailingDir));
                 } catch (Exception e) {
