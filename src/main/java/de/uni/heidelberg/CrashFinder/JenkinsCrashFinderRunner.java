@@ -71,6 +71,10 @@ public class JenkinsCrashFinderRunner implements CrashFinderRunner{
             listener.getLogger().println("Statement: " + seedStatement.toString());
             //3.Backward slicing
             Collection<? extends Statement> slice = crashFinderImpl.backWardSlicing(seedStatement, slicing);
+            listener.getLogger().println("---START DUMP SLICE---");
+            WALAUtils.dumpSlice(new ArrayList<Statement>(slice), new
+                    PrintWriter(listener.getLogger()));
+            listener.getLogger().println("---END DUMP SLICE---");
             
             //4. Intersection
             Collection<Statement> intersection = null;
