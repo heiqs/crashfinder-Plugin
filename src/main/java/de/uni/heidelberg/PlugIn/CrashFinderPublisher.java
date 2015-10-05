@@ -261,6 +261,9 @@ public final class CrashFinderPublisher extends Notifier {
                 String absPathJarPassing = GettingAbsPathFile.getAbsPath(this.pathToJarPassingVersion, pathToWorkspace);
                 String absPathJarFailing = GettingAbsPathFile.getAbsPath(this.pathToJarFailingVersion, pathToWorkspace);
                 String absPathSrcFileSystem = GettingAbsPathFile.getAbsPath(this.pathToSrcFileSystem, pathToWorkspace);
+                String absPathToCrashFinderJar = GettingAbsPathFile.getAbsPath(this.pathToCrashFinderJar, pathToWorkspace);
+                String absPathToTestsJar = GettingAbsPathFile.getAbsPath(this.pathToTestsJar, pathToWorkspace);
+
                 
                 listener.getLogger().println("Abs path dir: " + absPathLogDir);
                 listener.getLogger().println("Abs path jar passing: " + absPathJarPassing);
@@ -512,8 +515,8 @@ public final class CrashFinderPublisher extends Notifier {
                     FileUtils.copyURLToFile(new URL(hamcrestUrl), hamcrestJarFile);
 
                     Collection<String> commonJars = Arrays.asList(
-                            pathToCrashFinderJar,
-                            pathToTestsJar,
+                            absPathToCrashFinderJar,
+                            absPathToTestsJar,
                             junitJarFile.getCanonicalPath(),
                             hamcrestJarFile.getCanonicalPath()
                     );

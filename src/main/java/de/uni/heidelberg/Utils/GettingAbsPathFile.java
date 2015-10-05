@@ -23,6 +23,9 @@
  */
 package de.uni.heidelberg.Utils;
 
+import java.io.File;
+import java.io.IOException;
+
 /**
  *
  * @author antsaharinala
@@ -35,14 +38,13 @@ public class GettingAbsPathFile {
      * @param absPathDefault
      * @return 
      */
-    public static String getAbsPath(String inputPath, String absPathDefaultPath)
-    {
-        
-        if(inputPath.startsWith("./") == true)
-        {
-            return inputPath.replace("./", absPathDefaultPath + "/");
+    public static String getAbsPath(String inputPath, String absPathDefaultPath) throws IOException {
+        File inputFile = new File(inputPath);
+        if (inputFile.isAbsolute()) {
+            return inputPath;
+        } else {
+            return new File(absPathDefaultPath, inputPath).getCanonicalPath();
         }
-        return inputPath;
     }
     
 }
