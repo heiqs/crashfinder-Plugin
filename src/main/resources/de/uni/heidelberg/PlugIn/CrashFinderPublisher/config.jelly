@@ -81,14 +81,13 @@
     </f:nested>
    </f:entry>
 
-  <f:entry title="Passing version: command run test on instrumented jar" field="shellRunTestPassingVersion">
-    <f:textbox />
-  </f:entry>
+ <f:entry title="Path to tests jar" field="pathToTestsJar">
+     <f:textbox/>
+ </f:entry>
 
-   <f:entry title="Failing version: command run test on instrumented jar" field="shellRunTestFailingVersion">
-    <f:textbox />
-  </f:entry>
-                                                                                                                                                                                                                            
+<f:entry title="Path to crashFinder jar" field="pathToCrashFinderJar">
+    <f:textbox/>
+</f:entry>
 
   
   </j:jelly>

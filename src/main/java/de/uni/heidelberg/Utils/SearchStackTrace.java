@@ -198,7 +198,14 @@ public class SearchStackTrace {
 		}
 		return strStackTrace;
 	}
-        
-  
-    
+
+
+	public static String extractTestClass(File stackTraceFile) throws
+			IOException {
+		BufferedReader reader = new BufferedReader(new FileReader
+				(stackTraceFile));
+		reader.readLine();
+		String secondLine = reader.readLine();
+		return secondLine.replace("Test set:", "").trim();
+	}
 }

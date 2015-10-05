@@ -5,42 +5,26 @@
  */
 package de.uni.heidelberg.PlugIn;
 
+import com.google.common.base.Joiner;
 import de.uni.heidelberg.CrashFinder.JenkinsCrashFinderImplementation;
 import de.uni.heidelberg.CrashFinder.JenkinsCrashFinderRunner;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Set;
-
-import hudson.model.*;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.DirectoryFileFilter;
-
-import net.sf.json.JSONObject;
-
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
-
+import de.uni.heidelberg.Utils.*;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.tasks.BuildStepDescriptor;
-import hudson.tasks.BuildStepMonitor;
-import hudson.tasks.Builder;
-import hudson.tasks.CommandInterpreter;
-import hudson.tasks.Notifier;
-import hudson.tasks.Publisher;
+import hudson.model.*;
+import hudson.tasks.*;
 import hudson.util.FormValidation;
+import net.sf.json.JSONObject;
+import org.apache.commons.io.FileUtils;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.StaplerRequest;
 
-import de.uni.heidelberg.Utils.*;
-import static de.uni.heidelberg.Utils.SearchStackTrace.listf;
-
-import hudson.tasks.Shell;
-import java.util.Collection;
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.util.*;
 
 /**
  *
@@ -55,9 +39,9 @@ public final class CrashFinderPublisher extends Notifier {
         
         private final String pathToJarPassingVersion;
         
-        private final String shellRunTestPassingVersion;
+        private final String pathToTestsJar;
         
-        private final String shellRunTestFailingVersion;
+        private final String pathToCrashFinderJar;
         
         //private final String SCM;
          
@@ -97,8 +81,6 @@ public final class CrashFinderPublisher extends Notifier {
      * 
      * @param pathToJarPassingVersion
      * @param pathToLogPathDir
-     * @param shellRunTestPassingVersion
-     * @param shellRunTestFailingVersion
      */
         
          
@@ -107,8 +89,8 @@ public final class CrashFinderPublisher extends Notifier {
                     String pathToJarFailingVersion,
                     String pathToJarPassingVersion,
                     String pathToLogPathDir,
-                    String shellRunTestPassingVersion, 
-                    String shellRunTestFailingVersion,
+                    String pathToTestsJar,
+                    String pathToCrashFinderJar,
                     //String SCM,
                     String behaviour,
                     String git,
@@ -129,11 +111,9 @@ public final class CrashFinderPublisher extends Notifier {
                 
                 this.pathToLogPathDir = pathToLogPathDir;
 
-                this.shellRunTestFailingVersion = shellRunTestFailingVersion
-                        .replace('\n', ' ');
+                this.pathToTestsJar = pathToTestsJar;
                 
-                this.shellRunTestPassingVersion = shellRunTestPassingVersion
-                        .replace('\n', ' ');
+                this.pathToCrashFinderJar = pathToCrashFinderJar;
                 
                 //this.SCM = SCM;
                 
@@ -169,14 +149,14 @@ public final class CrashFinderPublisher extends Notifier {
         * @return
         */
         
-        public String getShellRunTestFailingVersion()
+        public String getPathToTestsJar()
         {
-            return this.shellRunTestFailingVersion;
+            return this.pathToTestsJar;
         }
         
-        public String getShellRunTestPassingVersion()
+        public String getPathToCrashFinderJar()
         {
-            return this.shellRunTestPassingVersion;
+            return this.pathToCrashFinderJar;
         }
         
         public String getPathToLogPathDir()
@@ -515,9 +495,43 @@ public final class CrashFinderPublisher extends Notifier {
                     JenkinsCrashFinderRunner runnerPassing = new JenkinsCrashFinderRunner(JenkCrashFinderPassing,listener);
                     runnerPassing.runner();
 
+                    listener.getLogger().println("Downloading junit and " +
+                                    "hamcrest...");
+                    String mavenBaseUrl = "http://repo1.maven.org/maven2/";
+                    String junitUrl = mavenBaseUrl + "junit/junit/4" +
+                            ".12/junit-4.12.jar";
+                    String hamcrestUrl = mavenBaseUrl +
+                            "org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar";
+                    File junitJarFile = new File(pathToWorkspace,
+                            "target/junit.jar");
+                    File hamcrestJarFile = new File(pathToWorkspace,
+                            "target/hamcrest-core.jar");
+                    listener.getLogger().println("Downloading junit and hamcrest");
+                    FileUtils.copyURLToFile(new URL(junitUrl), junitJarFile);
+                    FileUtils.copyURLToFile(new URL(hamcrestUrl), hamcrestJarFile);
+
+                    Collection<String> commonJars = Arrays.asList(
+                            pathToCrashFinderJar,
+                            pathToTestsJar,
+                            junitJarFile.getCanonicalPath(),
+                            hamcrestJarFile.getCanonicalPath()
+                    );
+                    Collection<String> passingJars = new ArrayList<String>
+                            (commonJars);
+                    passingJars.add(pathToInstrJarPassing);
+                    Collection<String> failingJars = new ArrayList<String>
+                            (commonJars);
+                    failingJars.add(pathToInstrJarFailing);
+
+                    String testClass = SearchStackTrace.extractTestClass
+                            (new File(pathToStackTrace));
+                    String testCommandTemplate = "java -cp \"%s\" org.junit" +
+                            ".runner.JUnitCore " + testClass;
+
                     //execute test on instrumented jar
                     listener.getLogger().println("Executing test on passing version");
-                    String commandTestPassingVersion = this.shellRunTestPassingVersion.replace("$INSTR_PASSING_VERSION", envVarPassing.get("INSTR_PASSING_VERSION"));
+                    String commandTestPassingVersion = String.format
+                            (testCommandTemplate, Joiner.on(':').join(passingJars));
                     String commandRunTestPassing = commandTestPassingVersion;
                     listener.getLogger().println("Command re-run test passing version: " + commandRunTestPassing);
                     CommandInterpreter runnerTestInstrPassing = new Shell(commandRunTestPassing);
@@ -534,7 +548,9 @@ public final class CrashFinderPublisher extends Notifier {
                     JenkinsCrashFinderRunner runnerFailing = new JenkinsCrashFinderRunner(JenkCrashFinderFailing,listener);
                     runnerFailing.runner();
                     listener.getLogger().println("Executing test on failing version");
-                    String commandTestFailingVersion = this.shellRunTestFailingVersion.replace("$INSTR_FAILING_VERSION", envVarFailing.get("INSTR_FAILING_VERSION"));
+                    String commandTestFailingVersion = String.format
+                            (testCommandTemplate, Joiner.on(':').join
+                                    (failingJars));
                     listener.getLogger().println("Command re-run test failing version: " + commandTestFailingVersion);
                     CommandInterpreter runnerTestInstrFailing = new Shell(commandTestFailingVersion);
                     runnerTestInstrFailing.perform(build, launcher, listener);
