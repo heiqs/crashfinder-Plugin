@@ -205,6 +205,10 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
         
     public void instrument(String pathToJar, String pathToInstrJar, Collection<Statement> intersection) 
     {
+        if (intersection.isEmpty()) {
+            throw new IllegalArgumentException("Cannot instrument: " +
+                    "Intersection is empty.");
+        }
 		Collection<IRStatement> irs = Slicing.convert(intersection);
 		SlicingOutput output1 = new SlicingOutput(irs);
 		RelatedStmtInstrumenter instrumenter = new RelatedStmtInstrumenter(
@@ -225,6 +229,14 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
     public Collection<Statement> intersection(List<String> diff,
 			Collection<? extends Statement> slice) 
     {
+        if (diff.isEmpty()) {
+            throw new IllegalArgumentException("Cannot intersect with empty " +
+                    "diff.");
+        }
+        if (slice.isEmpty()) {
+            throw new IllegalArgumentException("Cannot intersect with empty " +
+                    "slice");
+        }
 		Collection<Statement> sliceDiff = new ArrayList<Statement>();
 		for (Statement s1 : slice) {
 			String fullClassName = null;
