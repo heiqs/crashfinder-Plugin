@@ -39,7 +39,8 @@ import java.util.logging.Logger;
  * @author antsaharinala
  */
 public class JenkinsCrashFinderImplementation implements CrashFinderImplementation{
-    
+
+    private String canonicalPathToWorkspaceDir;
     private String pathToDiffOut;
     
     private String pathToLogDiff;
@@ -57,13 +58,15 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
    
     public JenkinsCrashFinderImplementation(String pathToDiffOut, String pathToLogDiff,
                                             String pathToStackTrace, String pathToJarFile,
-                                            String pathToInstrumentedJarFile, BuildListener listener)
+                                            String pathToInstrumentedJarFile,
+                                            String canonicalPathToWorkspaceDir, BuildListener listener)
     {
         this.pathToDiffOut = pathToDiffOut;
         this.pathToLogDiff = pathToLogDiff;
         this.pathToJarFile = pathToJarFile;
         this.pathToInstrumentedJarFile = pathToInstrumentedJarFile;
         this.pathToStackTrace = pathToStackTrace;
+        this.canonicalPathToWorkspaceDir = canonicalPathToWorkspaceDir;
         this.listener = listener;
         
     }
@@ -102,7 +105,11 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
     {
         return this.pathToStackTrace;
     }
-    
+
+    public String getCanonicalPathToWorkspaceDir() {
+        return canonicalPathToWorkspaceDir;
+    }
+
     public void setPathToDiffOut(String pathToDiffOut)
     {
         this.pathToDiffOut = pathToDiffOut;

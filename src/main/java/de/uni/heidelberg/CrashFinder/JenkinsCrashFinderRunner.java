@@ -7,13 +7,11 @@ package de.uni.heidelberg.CrashFinder;
 
 import com.ibm.wala.ipa.slicer.Statement;
 import de.hdu.pvs.crashfinder.analysis.Slicing;
+import de.hdu.pvs.crashfinder.util.WALAUtils;
+import de.uni.heidelberg.Utils.PackageExtractor;
 import hudson.model.BuildListener;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -87,17 +85,32 @@ public class JenkinsCrashFinderRunner implements CrashFinderRunner{
                         new BufferedWriter(new FileWriter(pathToLogDiff)));
                 output.write("");
                 br = new BufferedReader(new FileReader(pathToDiffFile));
+                String prefix = crashFinderImpl
+                        .getCanonicalPathToWorkspaceDir();
+                while (prefix.endsWith("/")) {
+                    prefix = prefix.substring(0, prefix.length() - 1);
+                }
+                // Escape special characters for regex use
+                prefix = Pattern.quote(prefix);
+                listener.getLogger().println("Prefix: " + prefix);
                 while ((sCurrentLine = br.readLine()) != null) 
                 {
-				
-                    Pattern p = Pattern.compile("\\+++ (.*)/(.*?).java");
+                    Pattern p = Pattern.compile("\\+++ " + prefix + "/(.*?)" +
+                            "\\.java");
                     Matcher m = p.matcher(sCurrentLine);
                     if (m.find())
                     {
-                        String strFound = m.group(2);
-                        matching.add(strFound);
-                        diffClass.add(strFound);
-                        listener.getLogger().println("Class found: " + strFound);
+                        String strFound = m.group();
+                        String absPath = strFound.replace("+++ ", "");
+                        File javaFile = new File(absPath);
+                        String packageName = new PackageExtractor(javaFile)
+                                .extractPackageName();
+                        String fileName = javaFile.getName();
+                        String fullClassName = packageName + "." + fileName
+                                .substring(0, fileName.length() - 5);
+                        matching.add(fullClassName);
+                        diffClass.add(fullClassName);
+                        listener.getLogger().println("Class found: " + fullClassName);
                         output.printf("%s\r\n", strFound);
                     }
                 }
