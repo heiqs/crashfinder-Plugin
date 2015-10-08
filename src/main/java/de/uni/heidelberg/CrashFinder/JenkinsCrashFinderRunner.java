@@ -55,6 +55,8 @@ public class JenkinsCrashFinderRunner implements CrashFinderRunner{
             String pathToDiffFile = crashFinderImpl.getPathToDiffOut();
             String pathToLogDiff = crashFinderImpl.getPathToLogDiff();
             String pathToInstrJar = crashFinderImpl.getPathToInstrumentedJarFile();
+            String pathToLogSlicing = crashFinderImpl.getPathToLogSlicing();
+            
             //String pathToInstrJar = crashFinderImpl.getPathToInstrumentedJarFile();
             
             //1. Slicing
@@ -70,7 +72,7 @@ public class JenkinsCrashFinderRunner implements CrashFinderRunner{
             Statement seedStatement = crashFinderImpl.findSeedStatement(pathToStackTrace, slicing);
             listener.getLogger().println("Statement: " + seedStatement.toString());
             //3.Backward slicing
-            Collection<? extends Statement> slice = crashFinderImpl.backWardSlicing(seedStatement, slicing);
+            Collection<? extends Statement> slice = crashFinderImpl.backWardSlicing(seedStatement, slicing, pathToLogSlicing);
             listener.getLogger().println("---START DUMP SLICE---");
             WALAUtils.dumpSlice(new ArrayList<Statement>(slice), new
                     PrintWriter(listener.getLogger()));
@@ -133,9 +135,9 @@ public class JenkinsCrashFinderRunner implements CrashFinderRunner{
             
             
         } catch (IOException ex) 
-            {
+        {
             Logger.getLogger(JenkinsCrashFinderRunner.class.getName()).log(Level.SEVERE, null, ex);
-            }
+        }
         
         
     }

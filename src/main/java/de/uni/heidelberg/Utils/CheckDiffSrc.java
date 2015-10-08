@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2015 antsaharinala.
+ * Copyright 2015 Antsa Harinala Andriamboavonjy.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,8 +27,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- *
- * @author antsaharinala
+ * 
+ * After analyzing if two files are different, this class checks whether these latter contain
+ * the source code or not.
+ * @author Antsa Harinala Andriamboavonjy
  */
 public class CheckDiffSrc {
     
@@ -36,13 +38,12 @@ public class CheckDiffSrc {
     {   
         boolean isDiffSrc = false;
         String regex = "diff -ENwbur " + "(.*).java (.*).java";
-	Pattern pattern = Pattern.compile(regex);
-	Matcher m = pattern.matcher(content);
-	if(m.find())
-	{
+        Pattern pattern = Pattern.compile(regex);
+        Matcher m = pattern.matcher(content);
+        if(m.find())
+        {
             isDiffSrc = true;
-	}
-	
+        }
         return isDiffSrc;
     }
     

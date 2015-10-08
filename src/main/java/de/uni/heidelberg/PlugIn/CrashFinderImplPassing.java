@@ -35,47 +35,70 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import de.uni.heidelberg.Utils.*;
-import static de.uni.heidelberg.Utils.CollectFilenameDirectory.collectAbsPathDir;
+import static de.uni.heidelberg.Utils.ExtractionFilenamePath.*;
 import org.jenkinsci.remoting.RoleChecker;
 
 /**
- *
- * @author antsaharinala
+ * The plugIn is able to get an old passing version of the project.
+ * There are three different ways to achieve this goal:
+ * 
+ * 1.  By using standard software version control like Git or Subversion. By using Git for example, the user of the plugIn
+ * is able to get the passing version by defining the number of back commit. In case of subVersion, the revision number 
+ * the passing version is given to be checked out.
+
+ * 2. The second option consists of simply giving a command checking out the passing version from SCM.
+ * The command is the same as used in shell in Unix-operating system.
+ * 
+ * 3. The third option simply captures the source code of the passing version from file system. 
+ * The entry is the path to the project. 
+ * 
+ * @author Antsa Harinala Andriamboavonjy
  */
-public class CrashFinderGettingOlderVersion implements FilePath.FileCallable {
+public class CrashFinderImplPassing implements FilePath.FileCallable {
   
+	//Variable specifies 
     private final String behaviour;
     
+    //Variable is not null, if Git is selected by the user
     private final String git;
     
+    //Variable is not null, if SubVersion is selected by the user
     private final String svn;
     
+    //variable contains the command used to check out the passing version
     private final String commandCheckOutPassing;
     
+    //variable contains the path to passing version
     private final String pathToSrcFileSystem;
     
-    private final String gitNumberCommit;
+    //variable contains the number commit back when using Git
+    private final String gitNumberCommitBack;
     
+    //variable contains the revision number in the case of subVersion
     private final String svnRevisionNumb;
     
     private AbstractBuild build;
     
     private BuildListener listener;
     
+    //variable contains authentification data when using subVersion
     private String usernameSvn;
     
+    //variable contains authentification data when using subVersion
     private String passwordSvn;
     
+    //variable contains authentification data when doing check out of the project using shell command.
     private String usernameSvnCommand;
     
+    //variable contains authentification data when doing check out of the project using shell command.
     private String passwordSvnCommand;
     
     private Launcher launcher;
     
-    public CrashFinderGettingOlderVersion(String behaviour,
+    public CrashFinderImplPassing(String behaviour,
                             String git, String svn,
                             String commandCheckOutPassing,String pathToSrcFileSystem,
-                            String gitNumberCommit, String svnRevisionNumb,
+                            String gitNumberCommitBack, String svnRevisionNumb,
                             String usernameSvn, String passwordSvn,
                             String usernameSvnCommand, String passwordSvnCommand,
                             AbstractBuild build, BuildListener listener,
@@ -87,7 +110,7 @@ public class CrashFinderGettingOlderVersion implements FilePath.FileCallable {
         this.commandCheckOutPassing = commandCheckOutPassing;
         this.pathToSrcFileSystem = pathToSrcFileSystem;
         this.svn = svn;
-        this.gitNumberCommit = gitNumberCommit;
+        this.gitNumberCommitBack = gitNumberCommitBack;
         this.svnRevisionNumb = svnRevisionNumb;
         this.build = build;
         this.listener = listener;
@@ -99,25 +122,37 @@ public class CrashFinderGettingOlderVersion implements FilePath.FileCallable {
         
     }
     
+    /**
+     * This method 
+     * @throws InterruptedException
+     * @throws IOException
+     */
     public void start() throws InterruptedException, IOException
     {
        this.executeCommandCheckOutPassing();
        this.executeCopySrcFromFileSystem();
        this.executeGitCheckOutWithNumberCommitBack();
        this.executeSVNCheckOutWithRevisionNumber();
-        
     }
     
+    /**
+     * This method retrieves the old passing version of the project from file system.
+     * @throws IOException
+     */
     public void executeCopySrcFromFileSystem() throws IOException
     {
         if(this.behaviour.equals("Filesystem") == true && this.pathToSrcFileSystem != null)
         {
             String pathToWorkspace = build.getWorkspace().getRemote();
-            ArrayList<String> listAbsPath = collectAbsPathDir(this.pathToSrcFileSystem);
-            CopyProjectToNewDirectory.copyProjectToDirectory(listAbsPath, pathToWorkspace);
+            ArrayList<String> listAbsPath = extractPath(this.pathToSrcFileSystem);
+            CopyProject.copyProject(listAbsPath, pathToWorkspace);
         }
     }
     
+    /**
+     * This method executes the command given by the user to check out the old passing version from a scm
+     * @throws InterruptedException
+     */
     public void executeCommandCheckOutPassing() throws InterruptedException
     {
         
@@ -137,6 +172,10 @@ public class CrashFinderGettingOlderVersion implements FilePath.FileCallable {
         }
     }
     
+    /**
+     * This method executes check out of a given revision number of the project.
+     * @throws InterruptedException
+     */
     public void executeSVNCheckOutWithRevisionNumber() throws InterruptedException
     {
        
@@ -154,7 +193,7 @@ public class CrashFinderGettingOlderVersion implements FilePath.FileCallable {
                 command = "svn up -r " + this.svnRevisionNumb + " --username " + this.usernameSvn + " --password " + this.passwordSvn;
             }else
             {
-              command = "svn up -r " + this.svnRevisionNumb ;
+            	command = "svn up -r " + this.svnRevisionNumb ;
             } 
             CommandInterpreter runner = new Shell(command);
             runner.perform(build, launcher, listener);
@@ -163,15 +202,18 @@ public class CrashFinderGettingOlderVersion implements FilePath.FileCallable {
         }
     }
     
+    /**
+     * This method executes the check out of the project which is committed before the current one's
+     * @throws InterruptedException
+     */
     public void executeGitCheckOutWithNumberCommitBack() throws InterruptedException
     {
         
-        if(this.behaviour.equals("Number") == true && this.git.equals("true") == true && this.gitNumberCommit.equals("")== false)
+        if(this.behaviour.equals("Number") == true && this.git.equals("true") == true && this.gitNumberCommitBack.equals("")== false)
         {
-                
-                String command = "git checkout HEAD~1";
+               	String command = "git checkout HEAD~1";
                 CommandInterpreter runner = new Shell(command);
-                int repetitions = Integer.parseInt(this.gitNumberCommit);
+                int repetitions = Integer.parseInt(this.gitNumberCommitBack);
                 for (int i = 0; i < repetitions; i++) 
                 {
                     runner.perform(build, launcher, listener);
@@ -193,4 +235,5 @@ public class CrashFinderGettingOlderVersion implements FilePath.FileCallable {
     }
     
 }
+
 

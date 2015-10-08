@@ -41,6 +41,7 @@ import java.util.logging.Logger;
 public class JenkinsCrashFinderImplementation implements CrashFinderImplementation{
 
     private String canonicalPathToWorkspaceDir;
+    
     private String pathToDiffOut;
     
     private String pathToLogDiff;
@@ -50,7 +51,11 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
     private String pathToStackTrace;
     
     private String pathToJarFile;
+    
     private String pathToInstrumentedJarFile;
+    
+    private String pathToLogSlicing;
+    
     private BuildListener listener;
     
     
@@ -58,7 +63,7 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
    
     public JenkinsCrashFinderImplementation(String pathToDiffOut, String pathToLogDiff,
                                             String pathToStackTrace, String pathToJarFile,
-                                            String pathToInstrumentedJarFile,
+                                            String pathToInstrumentedJarFile, String pathToLogSlicing,
                                             String canonicalPathToWorkspaceDir, BuildListener listener)
     {
         this.pathToDiffOut = pathToDiffOut;
@@ -67,6 +72,7 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
         this.pathToInstrumentedJarFile = pathToInstrumentedJarFile;
         this.pathToStackTrace = pathToStackTrace;
         this.canonicalPathToWorkspaceDir = canonicalPathToWorkspaceDir;
+        this.pathToLogSlicing = pathToLogSlicing;
         this.listener = listener;
         
     }
@@ -79,6 +85,13 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
         this.pathToJarFile = "";
         this.pathToInstrumentedJarFile = "";
         this.pathToStackTrace = "";
+        this.pathToLogSlicing = "";
+        this.canonicalPathToWorkspaceDir = "";
+    }
+    
+    public String getPathToLogSlicing()
+    {
+    	return this.pathToLogSlicing;
     }
     
     public String getPathToDiffOut()
@@ -180,6 +193,7 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
 
     }
 
+    /**
     public Collection<? extends Statement> backWardSlicing(Statement seedStatement, Slicing helper)
     {
         try {
@@ -189,7 +203,7 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
 		e.printStackTrace();
 		return null;
             }
-    }
+    }**/
 
     @Override
     public Statement findSeedStatement(String pathToStackTrace, Slicing slicing)throws IOException
@@ -265,13 +279,68 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
     }
 
 
+    /**
     private Collection<? extends Statement> backwardSlice(Statement seedStatement, Slicing helper)
     {
 	try {
 		return helper.computeSlice(seedStatement);
+		
             } catch (CancelException e) {
 		e.printStackTrace();
 		return null;
             }
+    }**/
+    
+    //new
+    @Override
+    public Collection<? extends Statement> backWardSlicing(Statement seedStatement, Slicing helper, String pathToLogSlicing) throws FileNotFoundException 
+    {
+    	Collection<Statement> slice = null;
+    	try {
+		slice = helper.computeSlice(seedStatement);
+                WALAUtils.dumpSliceToFile(slice,pathToLogSlicing);
+
+        /**
+		SlicingOutput output1 = helper.outputSlice(s);
+                
+		try {
+			output = new PrintWriter(
+					new BufferedWriter(new FileWriter(diffout)));
+			output.write("");
+
+			br = new BufferedReader(new FileReader(diff));
+			while ((sCurrentLine = br.readLine()) != null) {
+				//Pattern p = Pattern.compile("\\+++ /home/felix/2/(.*?).java");
+				Pattern p = Pattern.compile("\\+++ (.*)/(.*?).java");
+				Matcher m = p.matcher(sCurrentLine);
+				if (m.find()) {
+					String strFound = m.group(2);
+					matching.add(strFound);
+					diffClass.add(strFound);
+					//this.buildListener.getLogger().println("Str found: " + strFound);
+					output.printf("%s\r\n", strFound);
+				}
+			}
+			/**
+			 for (String line : matching) {
+			 //line = line.replaceAll("\\+++ /home/felix/2/", "");
+			 line = line.replaceAll("\\+++ (.*)/2/", "");
+			 line = line.replaceAll("\\.java", "");
+			 System.out.println(line);
+			 line = line.replace("/", ".");
+			 // sCurrentLine = sCurrentLine.replace("/", ".");
+			 diffClass.add(line);
+			 output.printf("%s\r\n", line);
+			 }**/
+
+		
+                
+    	}catch (CancelException e)
+    	{
+    	   	e.printStackTrace();
+    	   	return null;
+    	}
+        return slice;
     }
+    
 }

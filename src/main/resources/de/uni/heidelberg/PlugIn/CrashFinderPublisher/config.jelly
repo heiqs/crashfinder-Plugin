@@ -21,36 +21,35 @@
   <f:entry title="Path to jar failing version" field="pathToJarFailingVersion">
     <f:textbox default="./" />
  </f:entry>
-
+ 
  <f:entry title="Getting older version">
     <f:nested>
         <table>
             <f:radioBlock title="SCM" name="behaviour"  value="Number" inline="true">
                 <f:nested>
                     <table style="margin-left: 65px; width: 800px;">
-                        <f:optionalBlock title="Git" name="git" inline="true">
-                            <f:entry title="Going back x commit before"
-                                     field="gitNumberCommitBack">
+                        <f:optionalBlock title="Git" name="git" value="git" inline="true">
+                            <f:entry title="Going back x commit before">
                                 <f:textbox name="gitNumberCommitBack"/>
-                            </f:entry>
-                        </f:optionalBlock>
-
+                            </f:entry>                                                                
+                        </f:optionalBlock>                               
+                       
                         <f:optionalBlock title="Subversion" name="svn"  value="svn" inline="true">
                             <f:entry title="Username" field="usernameSvn">
                                 <f:textbox/>
                             </f:entry>
-                            <f:entry title="Password" field="passwordSvn">
+                            <f:entry title="Password" field="passwordSvn"> 
                                 <f:password/>
                             </f:entry>
                             <f:entry title="Going back to revision number x: " field="svnRevisionNumb">
                                 <f:textbox/>
                             </f:entry>
-                        </f:optionalBlock>
-
+                        </f:optionalBlock>                                             
+                        
                     </table>
                 </f:nested>
             </f:radioBlock>
-
+        
             <f:radioBlock title="Going back to older version with command line" name="behaviour" value="CommandLine"  inline="true">
                 <f:nested>
                     <table style="margin-left: 65px; width: 800px;">
@@ -66,28 +65,30 @@
                     </table>
                 </f:nested>
             </f:radioBlock>
-
-
+  
+  
             <f:radioBlock title="Getting older version from file system" name="behaviour" value="Filesystem" inline="true">
-                <f:nested>
+                <f:nested>  
                     <table style="margin-left: 65px; width: 800px;">
                         <f:entry title="Path to src" field="pathToSrcFileSystem">
                             <f:textbox default="./" />
-                        </f:entry>
+                        </f:entry>                                                    
                     </table>
-                </f:nested>
-            </f:radioBlock>
+                </f:nested>                
+            </f:radioBlock>   
         </table>
-    </f:nested>
+    </f:nested>        
    </f:entry>
-
- <f:entry title="Path to tests jar" field="pathToTestsJar">
+  
+  <f:entry title="Path to tests jar" field="pathToTestsJar">
      <f:textbox/>
  </f:entry>
 
 <f:entry title="Path to crashFinder jar" field="pathToCrashFinderJar">
     <f:textbox/>
 </f:entry>
+                                                                                                                                                                                                          
 
   
   </j:jelly>
+  

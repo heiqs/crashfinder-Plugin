@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2015 antsaharinala.
+ * Copyright 2015 Antsa Harinala Andriamboavonjy.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,54 +21,46 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
 package de.uni.heidelberg.Utils;
 
 import java.io.*;
 import java.util.*;
+
 import org.apache.commons.io.FileUtils;
 
 /**
- *
- * @author antsaharinala
+ * This class enables to copy files and directories which compose a project to other directory
+ * @author Antsa Harinala Andriamboavonjy
  */
-public class RetrieveFilesPassing {
+public class CopyProject {
     
-    public static HashMap<String,String> extractFilenamePassingProject(String pathParentDir, File fileReference)
-	{
-		//result 
-		HashMap<String,String> mapFilenamePath = new HashMap<String,String>();
-		//extract current file and directory containing in the parent directory
-		ArrayList<File> listFilesParentDir = RetrieveFilesPassing.listf(pathParentDir);
-		
-		for ( int i = 0 ; i < listFilesParentDir.size() ; i++ )
-		{
-			File file = listFilesParentDir.get(i);
-			
-			if(FileUtils.isFileNewer(file, fileReference))
-			{
-				String filename = file.getName();
-				String absPathFile = file.getAbsolutePath();
-				mapFilenamePath.put(filename, absPathFile);
-			}
-			
-		}//end for 
-		
-		return mapFilenamePath;
-	}
-	
-    
-	public static ArrayList<File> listf(String pathToParentDir) 
-	{
-		ArrayList<File> listPath = new ArrayList<File>();
-		File directory = new File(pathToParentDir);
-
-		// get all the files from a directory
-		File[] fList = directory.listFiles();
-		for (File file : fList) 
-		{
-			listPath.add(file);
-			
-		}//end for
-		return listPath;
-	}
+	/**
+	 * 
+	 * @param listPath - list containing path of all files and directories to be moved.
+	 * @param destinationDirectory - destination's path
+	 * @return
+	 * @throws IOException
+	 */
+	public static boolean copyProject(ArrayList<String> listPath, String destinationDirectory) throws IOException
+    {
+        //boolean isFinished = false;
+        File fileDestinationDir = new File(destinationDirectory);
+        for(int i = 0 ; i  < listPath.size() ; i++)
+    	{
+            String pathToFile = listPath.get(i);
+            File file  = new File(pathToFile);
+            if(file.isFile() && file.isHidden() == false) 
+            {
+                //isFinished = false;
+                FileUtils.copyFileToDirectory(file, fileDestinationDir);
+                
+            }else if (file.isDirectory()) {
+                //isFinished = false;
+                FileUtils.copyDirectoryToDirectory(file, fileDestinationDir);
+            }
+    	}
+        
+        return true;
+    }
 }

@@ -250,6 +250,28 @@ public final class CrashFinderPublisher extends Notifier {
             }else
             {
              
+            	  CrashFinderImplException crashFinderImplException = new CrashFinderImplException(
+                  		pathToLogPathDir,
+              			pathToJarFailingVersion,
+              	        pathToJarPassingVersion,
+              	        this.pathToTestsJar,
+              	        this.pathToCrashFinderJar,
+              	        behaviour,
+              	        git,
+              	        svn,
+              	        commandCheckOutPassing,
+              	        pathToSrcFileSystem,
+              	        gitNumberCommitBack,
+              	        svnRevisionNumb,
+              	        usernameSvn,
+              	        passwordSvn,
+              	        usernameSvnCommand,
+              	        passwordSvnCommand,
+              	        listener);
+                  if(crashFinderImplException.isMissingInformation() == true)
+                  {
+                  	return true;
+                  }
                 
                 String pathToWorkspace = build.getWorkspace().getRemote();
                 File fileWorkspace = new File(pathToWorkspace);
@@ -259,6 +281,7 @@ public final class CrashFinderPublisher extends Notifier {
                 //replace rel path to abs path
                 FilePathAbsolutizer absolutizer = new FilePathAbsolutizer
                         (pathToWorkspace);
+                
                 String absPathLogDir = absolutizer.absolutize(this.pathToLogPathDir);
                 String absPathJarPassing = absolutizer.absolutize(this.pathToJarPassingVersion);
                 String absPathJarFailing = absolutizer.absolutize(this.pathToJarFailingVersion);
@@ -266,216 +289,146 @@ public final class CrashFinderPublisher extends Notifier {
                 String absPathToCrashFinderJar = absolutizer.absolutize(this.pathToCrashFinderJar);
                 String absPathToTestsJar = absolutizer.absolutize(this.pathToTestsJar);
 
-                
-                listener.getLogger().println("Abs path dir: " + absPathLogDir);
-                listener.getLogger().println("Abs path jar passing: " + absPathJarPassing);
-                listener.getLogger().println("Abs path jar failing: " + absPathJarFailing);
-                
-                //1. collect existing filename of file and directory in workspace
-                HashMap<String,String> mapFilenamePathFailing = CollectFilenameDirectory.collectFilenameDir(pathToWorkspace);
+            
+                //collect filename in workspace
+                HashMap<String,String> mapFilenamePathFailing = ExtractionFilenamePath.extractFilenamePath(pathToWorkspace);
                 Set<String> setFilenameFailing = mapFilenamePathFailing.keySet();
                         
-                //2. copy copy existing file and directory in a new directory
+                //copy passing version to directory named FAILING
                 String failingPath = "FAILING";
                 String absPathFailingDir = pathToWorkspace + "/" +  failingPath;
                 Collection<String> collectionPath = mapFilenamePathFailing.values();
                 ArrayList<String> listPath = new ArrayList<String>(collectionPath);
-                CopyProjectToNewDirectory.copyProjectToDirectory(listPath,absPathFailingDir); // file only copied
+                for (int i = 0 ; i < listPath.size() ; i++)
+                {
+                	listener.getLogger().println("Path failing: " + listPath.get(i));
+                }
+                CopyProject.copyProject(listPath,absPathFailingDir); // file only copied
+                //RemoveFileDirectory.deleteFileDirectory(listPath);
                 
                 try {
+                //Checkout the passing version
+                CrashFinderImplPassing getPassing = new CrashFinderImplPassing(
+                                                                    behaviour,
+                                                                    git, svn,
+                                                                    commandCheckOutPassing, absPathSrcFileSystem,
+                                                                    gitNumberCommitBack, svnRevisionNumb,
+                                                                    usernameSvn, passwordSvn,
+                                                                    usernameSvnCommand, passwordSvnCommand,
+                                                                    build, listener,
+                                                                    launcher);
+                
+                filePathWorkspace.act(getPassing);
+                
+                
+                //Extraction filenames passing version
+                HashMap<String,String> mapFilenamePathPassing = new HashMap<String,String>();
+                File fileFailing = new File(absPathFailingDir);
+                
+                ArrayList<String> listPathException = new ArrayList<String>();
+                listPathException.add(absPathFailingDir);
+                
+                //mapFilenamePathPassing = ExtractionFilenamePassing.extractFilenamePath(pathToWorkspace,fileFailing, listener);
+                mapFilenamePathPassing = ExtractionFilenamePassing.collectFilenamePathPassing(pathToWorkspace, listPathException);
+                Iterator<String> iterFilename = mapFilenamePathPassing.keySet().iterator();
+                listener.getLogger().println("mapFilenamePathPassing: " +
+                              mapFilenamePathPassing.entrySet());
+                
+                
+                //Create log directory
+                CrashFinderImplLog logger = new CrashFinderImplLog(absPathLogDir);
+                listener.getLogger().println("Log path: " + absPathLogDir);
+                
+            
+                //Diff log
+                String logDiff = "Diff";
+                String absPathDiffLog = logger.createSubdirectory(logDiff);
 
-                    //3. checkout older version project
-                    CrashFinderGettingOlderVersion gettingOldProject = new CrashFinderGettingOlderVersion(
-                                                                        behaviour,
-                                                                        git, svn,
-                                                                        commandCheckOutPassing, absPathSrcFileSystem,
-                                                                        gitNumberCommitBack, svnRevisionNumb,
-                                                                        usernameSvn, passwordSvn,
-                                                                        usernameSvnCommand, passwordSvnCommand,
-                                                                        build, listener,
-                                                                        launcher);
+                 //stacktrace file
+                 String logStackTrace = "log-stacktrace.txt";
+                 String pathToStackTrace = logger.createFile(logStackTrace);
 
-                    filePathWorkspace.act(gettingOldProject);
+                 //path to directory containing the instrumented jar
+                 String logInstr = "Instrumentation";
+                 String pathToLogInstr = logger.createSubdirectory(logInstr);
 
+                 //output after executing diff command
+                 String absPathToDiffFile = "";
+                 
+               //Result slicing
+               String logSlicing = "Slicing";
+               String pathToLogSlicing = logger.createSubdirectory(logSlicing);
+               String filenameSlicingPassing = "dumpslice_passing.txt";
+               String filenameSlicingFailing = "dumpslice_failing.txt";
+               String pathToLogSlicingPassing = logger.createFileInSubdirectory(pathToLogSlicing,filenameSlicingPassing );
+               String pathToLogSlicingFailing = logger.createFileInSubdirectory(pathToLogSlicing, filenameSlicingFailing);
 
-                    /**
-                    CommandInterpreter runner = new Shell(finalCheckoutCmd);
-                    int repetitions = Integer.parseInt(numOfCommitsToGoBack);
-                    for (int i = 0; i < repetitions; i++) {
-                        runner.perform(build, launcher, listener);
-                    }**/
+               String pathToLogDiffPassing = logger.createFileInSubdirectory(absPathDiffLog,"log-diff-passing.txt" );
+               String pathToLogDiffFailing = logger.createFileInSubdirectory(absPathDiffLog, "log-diff-failing.txt");
 
+               //String nameInstrJarPassing =  new File(pathToJarPassingVersion).getName().replace(".jar", "-passing-instr.jar");
+               //String nameInstrJarFailing =  new File(pathToJarFailingVersion).getName().replace(".jar", "-failing-instr.jar");
+               String nameInstrJarPassing = new File(absPathJarPassing).getName().replace(".jar", "-passsing-instr.jar");
+               String nameInstrJarFailing = new File(absPathJarFailing).getName().replace(".jar", "-failing-instr.jar");
 
-                    //4. Collect filename and abs path new file and directory except failingVersion directory
-                    //HashMap<String,String> mapNewFilenamePath = CollectFilenameDirectory.collectFilenameDirExc(pathToWorkspace,newDirectoryNameFailingVersion);
-                    HashMap<String,String> mapFilenamePathPassing = new HashMap<String,String>();
-                    File fileFailing = new File(absPathFailingDir);
-                    mapFilenamePathPassing = CollectFilenameDirectory
-                            .collectFilenameDir(pathToWorkspace);
+               String pathToInstrJarPassing = logger.createFileInSubdirectory(pathToLogInstr,nameInstrJarPassing);
+               String pathToInstrJarFailing = logger.createFileInSubdirectory(pathToLogInstr,nameInstrJarFailing);
 
-                    //Create log directory
-                    //String absPathToLogDir = absolutizer.absolutize(this.pathToLogPathDir);
-                    CrashFinderLogger logger = new CrashFinderLogger(absPathLogDir);
-                    listener.getLogger().println("Path to log directory: " + absPathLogDir);
+               EnvVars envVarPassing = build.getEnvironment(listener);
+               envVarPassing.put("INSTR_PASSING_VERSION", pathToInstrJarPassing);
 
-                    //Diff log
-                    String logDiff = "Diff";
-                    String absPathDiffLog = logger.createLogSubDir(logDiff);
-
-                    //stacktrace file
-                    String logStackTrace = "log-stacktrace.txt";
-                    String pathToStackTrace = logger.createLogFile(logStackTrace);
-
-                    //path to directory containing the instrumented jar
-                    String logInstr = "Instrumentation";
-                    String pathToLogInstr = logger.createLogSubDir(logInstr);
-
-                    //output after executing diff command
-                    String absPathToDiffFile = "";
-
-                    String pathToLogDiffPassing = logger.createFileSubDirLog(absPathDiffLog,"log-diff-passing.txt" );
-                    String pathToLogDiffFailing = logger.createFileSubDirLog(absPathDiffLog, "log-diff-failing.txt");
-
-                    //String nameInstrJarPassing =  new File(pathToJarPassingVersion).getName().replace(".jar", "-passing-instr.jar");
-                    //String nameInstrJarFailing =  new File(pathToJarFailingVersion).getName().replace(".jar", "-failing-instr.jar");
-                    String nameInstrJarPassing = new File(absPathJarPassing).getName().replace(".jar", "-passsing-instr.jar");
-                    String nameInstrJarFailing = new File(absPathJarFailing).getName().replace(".jar", "-failing-instr.jar");
-
-                    String pathToInstrJarPassing = logger.createFileSubDirLog(pathToLogInstr,nameInstrJarPassing);
-                    String pathToInstrJarFailing = logger.createFileSubDirLog(pathToLogInstr,nameInstrJarFailing);
-
-                    EnvVars envVarPassing = build.getEnvironment(listener);
-                    envVarPassing.put("INSTR_PASSING_VERSION", pathToInstrJarPassing);
-
-                    EnvVars envVarFailing = build.getEnvironment(listener);
-                    envVarFailing.put("INSTR_FAILING_VERSION", pathToInstrJarFailing);
-
-
-
-
-                    /**
-                    if(mapFilenamePathPassing.size() == 1 ) // case svn
-                    {
-                        listener.getLogger().println("SCM SVN");
-                        Iterator<String> iter = mapFilenamePathPassing.keySet().iterator();
-                        String fileName = "";
-                        while(iter.hasNext())
-                        {
-                            fileName = iter.next();
-                        }
-                        String pathToParentDirPassing = mapFilenamePathPassing.get(fileName);
-                        File fileParentDirPassing = new File(pathToParentDirPassing);
-
-                        if(fileParentDirPassing.isDirectory() == true || fileParentDirPassing.exists() == true)
-                        {
-                           HashMap<String,String> passingFilenamePath = CollectFilenameDirectory.collectFilenameDir(pathToParentDirPassing);
-                           Set<String> setFilenamePassing = passingFilenamePath.keySet();
-
-                           //build intersection
-                           setFilenameFailing.retainAll(setFilenamePassing);
-                           Iterator<String> iterFilename = setFilenameFailing.iterator();
-                           while(iterFilename.hasNext())
-                           {
-                               String filename = iterFilename.next();
-                               String absPathFailing = mapFilenamePathFailing.get(filename);
-                               String absPathPassing = passingFilenamePath.get(filename);
-
-                               //execute diff
-                               absPathToDiffFile = logger.createFileSubDirLog(absPathDiffLog, filename);
-                               String command = "diff -ENwbur " + absPathPassing + " " + absPathFailing + " > " + absPathToDiffFile ;
-                               listener.getLogger().println("Diff command:\n" + command);
-                               CommandInterpreter runnerDiff = new Shell(command);
-                               runnerDiff.perform(build, launcher, listener);
-
-                               //read content result
-                               String contentResult = DocumentReader.slurpFile(new File(absPathToDiffFile));
-                               if(CheckDiffSrc.isDiffSrc(contentResult)== true)
-                               {
-                                   String strStackTrace = SearchStackTrace.searchFileStackTrace(absPathFailingDir,listener);
-                                   listener.getLogger().println("Size stack trace: " + strStackTrace.split("\n").length);
-                                   listener.getLogger().println("Stack trace:\n" + strStackTrace);
-                                   DocumentWriter.writeDocument(strStackTrace, new File(pathToStackTrace));
-                                   break;
-                               }
-
-                           }
-
-                        }
-
-                    }else if(mapFilenamePathPassing >  1 ) //Git
-                    {
-
-                        listener.getLogger().println("SCM Git");
-                    **/
-                        //file and directory are overwritten after checkout
-                        //mapFilenamePathPassing =  mapFilenamePathFailing;
-
-                    //Passing
-
-                    // Iterator<String> iter1 = mapFilenamePathPassing.keySet().iterator();
-                    // while(iter1.hasNext())
-                    // {
-                    //    String filename =  iter1.next();
-                    //    String absPath = mapFilenamePathPassing.get(filename);
-                    //      listener.getLogger().println("Filename passing: " + filename);
-                    //        listener.getLogger().println("Absolute path passing: " + absPath);
-                    //}
-
-                    //Failing
-                    mapFilenamePathFailing = CollectFilenameDirectory.collectFilenameDir(absPathFailingDir);
-                    listener.getLogger().println("mapFilenamePathFailing: " +
+               EnvVars envVarFailing = build.getEnvironment(listener);
+               envVarFailing.put("INSTR_FAILING_VERSION", pathToInstrJarFailing);
+               
+               //Passing
+               //HashMap<String,String> mapFilenamePathPassing = new HashMap<String,String>();
+               //File fileFailing = new File(absPathFailingDir);
+               //mapFilenamePathPassing = ExtractionFilenamePassing.extractFilenamePath(pathToWorkspace,fileFailing);
+               
+               //Failing
+               mapFilenamePathFailing =  ExtractionFilenamePath.extractFilenamePath(absPathFailingDir);
+               listener.getLogger().println("mapFilenamePathFailing: " +
                             mapFilenamePathFailing.entrySet());
-                    setFilenameFailing = mapFilenamePathFailing.keySet();
+               setFilenameFailing = mapFilenamePathFailing.keySet();
 
-                        //Iterator<String> iter = mapFilenamePathFailing.keySet().iterator();
-                        //while(iter.hasNext())
-                        //{
-                        //    String filename = iter.next();
-                        //    String absPath = mapFilenamePathFailing.get(filename);
-                        //    listener.getLogger().println("Failing filename: " + filename);
-                        //    listener.getLogger().println("Failing absolut path: " + absPath);
-                        //}
+              /* 
+              Iterator<String> iterFilename = mapFilenamePathPassing.keySet().iterator();
+              listener.getLogger().println("mapFilenamePathPassing: " +
+                            mapFilenamePathPassing.entrySet());*/
 
+             
+              String absPathToFinalDiffFile = logger.createFileInSubdirectory(absPathDiffLog, "diff.diff");
+              Collection<String> diffFiles = new ArrayList<String>();
 
+              while(iterFilename.hasNext())
+              {
+                    String filenamePassing = iterFilename.next();
+                    String absPathPassing = mapFilenamePathPassing.get(filenamePassing);
 
-
-                    Iterator<String> iterFilename = mapFilenamePathPassing.keySet().iterator();
-                    listener.getLogger().println("mapFilenamePathPassing: " +
-                            mapFilenamePathPassing.entrySet());
-
-                    String absPathToFinalDiffFile = logger.createFileSubDirLog
-                            (absPathDiffLog, "diff.diff");
-                    Collection<String> diffFiles = new ArrayList<String>();
-
-                    while(iterFilename.hasNext())
+                    if(setFilenameFailing.contains(filenamePassing)== true)
                     {
-                        String filenamePassing = iterFilename.next();
-                        String absPathPassing = mapFilenamePathPassing.get(filenamePassing);
+                           String absPathFailing = mapFilenamePathFailing.get(filenamePassing);
+                           //execute diff
+                           absPathToDiffFile = logger.createFileInSubdirectory(absPathDiffLog, filenamePassing);
+                           String command = "diff -ENwbur " + absPathPassing + " " + absPathFailing + " > " + absPathToDiffFile ;
+                           listener.getLogger().println("Diff command:\n" + command);
+                           CommandInterpreter runnerDiff = new Shell(command);
+                           runnerDiff.perform(build, launcher, listener);
 
-                        if(setFilenameFailing.contains(filenamePassing)== true)
-                        {
-                               String absPathFailing = mapFilenamePathFailing.get(filenamePassing);
-                               //execute diff
-                               absPathToDiffFile = logger.createFileSubDirLog(absPathDiffLog, filenamePassing);
-                               String command = "diff -ENwbur " + absPathPassing + " " + absPathFailing + " > " + absPathToDiffFile ;
-                               listener.getLogger().println("Diff command:\n" + command);
-                               CommandInterpreter runnerDiff = new Shell(command);
-                               runnerDiff.perform(build, launcher, listener);
+                           diffFiles.add(absPathToDiffFile);
 
-                            diffFiles.add(absPathToDiffFile);
-
-                               //read content result
-                               String contentResult = DocumentReader.slurpFile(new File(absPathToDiffFile));
-                               if(CheckDiffSrc.isDiffSrc(contentResult)== true)
-                               {
-                                   String strStackTrace = SearchStackTrace.searchFileStackTrace(absPathFailingDir,listener);
+                           //read content result
+                           String contentResult = DocumentReader.slurpFile(new File(absPathToDiffFile));
+                           if(CheckDiffSrc.isDiffSrc(contentResult)== true)
+                           {
+                                   String strStackTrace = CrashFinderImplStackTrace.searchFileStackTrace(absPathFailingDir,listener);
                                    listener.getLogger().println("Stacktrace:\n" + strStackTrace);
                                    DocumentWriter.writeDocument(strStackTrace, new File(pathToStackTrace));
                                    break;
-                               }
-                        }
-
+                           }
                     }
+
+               }
 
                     if (diffFiles.isEmpty()) {
                         listener.getLogger().println("No Diff between old and new" +
@@ -496,7 +449,7 @@ public final class CrashFinderPublisher extends Notifier {
                     JenkinsCrashFinderImplementation JenkCrashFinderPassing = new
                             JenkinsCrashFinderImplementation(absPathToFinalDiffFile,
                             pathToLogDiffPassing,pathToStackTrace,
-                            absPathJarPassing,pathToInstrJarPassing,
+                            absPathJarPassing,pathToInstrJarPassing,pathToLogSlicingPassing,
                             pathToWorkspace, listener);
                     JenkinsCrashFinderRunner runnerPassing = new JenkinsCrashFinderRunner(JenkCrashFinderPassing,listener);
                     runnerPassing.runner();
@@ -529,8 +482,9 @@ public final class CrashFinderPublisher extends Notifier {
                             (commonJars);
                     failingJars.add(pathToInstrJarFailing);
 
-                    String testClass = SearchStackTrace.extractTestClass
+                    String testClass = CrashFinderImplStackTrace.extractTestClass
                             (new File(pathToStackTrace));
+                    listener.getLogger().println("Test class: " + testClass);
                     String testCommandTemplate = "java -cp \"%s\" org.junit" +
                             ".runner.JUnitCore " + testClass;
 
@@ -549,7 +503,7 @@ public final class CrashFinderPublisher extends Notifier {
                             JenkinsCrashFinderImplementation
                             (absPathToFinalDiffFile,pathToLogDiffFailing,
                                     pathToStackTrace,absPathJarFailing,
-                                    pathToInstrJarFailing, absPathFailingDir,
+                                    pathToInstrJarFailing, pathToLogSlicingFailing, absPathFailingDir,
                                     listener);
                     JenkinsCrashFinderRunner runnerFailing = new JenkinsCrashFinderRunner(JenkCrashFinderFailing,listener);
                     runnerFailing.runner();
@@ -577,14 +531,17 @@ public final class CrashFinderPublisher extends Notifier {
                             failingDumpFile));
 
                     FileUtils.deleteDirectory(new File(absPathFailingDir));
-                } catch (Exception e) {
+                    
+                } catch(Exception e) {
                     FileUtils.deleteDirectory(new File(absPathFailingDir));
                     throw new RuntimeException(e);
                 }
-            }
-
-            return true;
                 
+               
+            }
+           
+            return true;
+             
         }
 
         //@Override
@@ -697,4 +654,3 @@ public final class CrashFinderPublisher extends Notifier {
 
     
     
-
