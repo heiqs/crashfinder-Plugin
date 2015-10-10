@@ -22,6 +22,29 @@
     <f:textbox default="./" />
  </f:entry>
  
+ <f:entry title="Stack trace">
+ 	<f:nested>
+ 		<table>
+ 			<f:radioBlock title="Get stack trace automatically" name="stackTrace"  value="automatically" inline="true"/>
+ 			<f:radioBlock title="Get stack trace manually" name="stackTrace"  value="manually" inline="true">
+ 				 <f:nested>
+                    <table style="margin-left: 65px; width: 800px;">
+                        <f:entry title="Path to stack trace" field="pathToStackTrace">
+                            <f:textbox/>
+                        </f:entry>
+                        <f:entry title="Full name failed test class" field="fullNameFailedTestClass">
+                            <f:textbox/>
+                        </f:entry>
+                        
+                    </table>
+                </f:nested>
+ 			</f:radioBlock>
+ 		</table>
+    </f:nested> 
+ </f:entry>  
+ 
+ 
+ 
  <f:entry title="Getting older version">
     <f:nested>
         <table>

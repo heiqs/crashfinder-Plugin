@@ -24,6 +24,7 @@
 package de.uni.heidelberg.PlugIn;
 
 import hudson.FilePath;
+import hudson.FilePath.FileCallable;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
@@ -95,6 +96,10 @@ public class CrashFinderImplPassing implements FilePath.FileCallable {
     
     private Launcher launcher;
     
+    private final String filenamePassing = "PASSING";
+    
+    private String pathToPassing = "";
+    
     public CrashFinderImplPassing(String behaviour,
                             String git, String svn,
                             String commandCheckOutPassing,String pathToSrcFileSystem,
@@ -122,6 +127,12 @@ public class CrashFinderImplPassing implements FilePath.FileCallable {
         
     }
     
+    public String getPathToPassing()
+    {
+    	return this.pathToPassing;
+    }
+    
+    
     /**
      * This method 
      * @throws InterruptedException
@@ -143,18 +154,29 @@ public class CrashFinderImplPassing implements FilePath.FileCallable {
     {
         if(this.behaviour.equals("Filesystem") == true && this.pathToSrcFileSystem != null)
         {
+        	/**
             String pathToWorkspace = build.getWorkspace().getRemote();
             ArrayList<String> listAbsPath = extractPath(this.pathToSrcFileSystem);
-            CopyProject.copyProject(listAbsPath, pathToWorkspace);
+            CopyProject.copyProject(listAbsPath, pathToWorkspace);**/
+        	this.pathToPassing = this.pathToSrcFileSystem;
         }
     }
     
     /**
      * This method executes the command given by the user to check out the old passing version from a scm
      * @throws InterruptedException
+     * @throws IOException 
      */
-    public void executeCommandCheckOutPassing() throws InterruptedException
+    public void executeCommandCheckOutPassing() throws InterruptedException, IOException
     {
+    	listener.getLogger().println("Execute check out from command line");
+    	String pathToPassingDir = build.getWorkspace().getRemote() + "/" + this.filenamePassing;
+        File dirPassing = new File(pathToPassingDir);
+        if(dirPassing.exists()== false)
+        {
+        	dirPassing.mkdir();
+        }
+        FilePath filePathPassing = new FilePath(dirPassing);
         
         if(this.behaviour.equals("CommandLine") == true && this.commandCheckOutPassing.equals("")==false)
         {
@@ -167,30 +189,45 @@ public class CrashFinderImplPassing implements FilePath.FileCallable {
                 command = this.commandCheckOutPassing + " --username " + this.usernameSvnCommand + " --password " + this.passwordSvnCommand;
             }
             
+            String commandCheckOut = "cd " + pathToPassingDir + "  && " +  command;
+            /**
             CommandInterpreter runner = new Shell(command);
-            runner.perform(build, launcher, listener);
+            runner.perform(build, launcher, listener);**/
+            filePathPassing.act(new CrashFinderImplPassingCheckOut(build, listener,launcher,commandCheckOut));
+            this.pathToPassing = pathToPassingDir;
         }
+       
     }
     
     /**
      * This method executes check out of a given revision number of the project.
      * @throws InterruptedException
+     * @throws IOException 
      */
-    public void executeSVNCheckOutWithRevisionNumber() throws InterruptedException
+    public void executeSVNCheckOutWithRevisionNumber() throws InterruptedException, IOException
     {
+       listener.getLogger().println("SVN check out from revision number");
+       String pathToPassingDir = build.getWorkspace().getRemote() + "/" + this.filenamePassing;
+       File dirPassing = new File(pathToPassingDir);
+       if(dirPassing.exists()== false)
+       {
+       	dirPassing.mkdir();
+       }
+       FilePath filePathPassing = new FilePath(dirPassing);
        
-        if(this.behaviour.equals("Number") == true && this.svn.equals("true")==true && this.svnRevisionNumb.equals("")==false)
-        {
-            
+       CopyHiddenFile.copyHiddenFile(this.build.getWorkspace().getRemote(), pathToPassingDir);
+       
+       if(this.behaviour.equals("Number") == true && this.svn.equals("true")==true && this.svnRevisionNumb.equals("")==false)
+       {
+            /**
             String commandSvnUpgrade =  "svn upgrade";
             CommandInterpreter runnerSvnUpgrade = new Shell(commandSvnUpgrade);
             runnerSvnUpgrade.perform(build, launcher, listener);
             String command = "";
             
-            if(this.usernameSvn != null && this.passwordSvn != null )
+            if(this.usernameSvn != null && this.passwordSvn != null)
             {
-               
-                command = "svn up -r " + this.svnRevisionNumb + " --username " + this.usernameSvn + " --password " + this.passwordSvn;
+               command = "svn up -r " + this.svnRevisionNumb + " --username " + this.usernameSvn + " --password " + this.passwordSvn;
             }else
             {
             	command = "svn up -r " + this.svnRevisionNumb ;
@@ -198,27 +235,73 @@ public class CrashFinderImplPassing implements FilePath.FileCallable {
             CommandInterpreter runner = new Shell(command);
             runner.perform(build, launcher, listener);
             runnerSvnUpgrade.perform(build, launcher, listener);
-            
-        }
-    }
+            **/
+    	   
+    	   String commandSvnUpgrade =  "svn upgrade";
+           //CommandInterpreter runnerSvnUpgrade = new Shell(commandSvnUpgrade);
+           //runnerSvnUpgrade.perform(build, launcher, listener);
+           String command = "";
+           
+           if(this.usernameSvn != null && this.passwordSvn != null)
+           {
+              command = "svn up -r " + this.svnRevisionNumb + " --username " + this.usernameSvn + " --password " + this.passwordSvn;
+           }else
+           {
+           	command = "svn up -r " + this.svnRevisionNumb ;
+           } 
+           //CommandInterpreter runner = new Shell(command);
+           //runner.perform(build, launcher, listener);
+           //runnerSvnUpgrade.perform(build, launcher, listener);
+           String commandSVN = "cd " + pathToPassingDir + " && " + commandSvnUpgrade + " && " + command + " && " + commandSvnUpgrade;
+           
+           filePathPassing.act(new CrashFinderImplPassingCheckOut(build, listener, launcher, commandSVN));
+           this.pathToPassing = pathToPassingDir;
+       }
+   }
     
     /**
      * This method executes the check out of the project which is committed before the current one's
      * @throws InterruptedException
+     * @throws IOException 
      */
-    public void executeGitCheckOutWithNumberCommitBack() throws InterruptedException
+    public void executeGitCheckOutWithNumberCommitBack() throws InterruptedException, IOException
     {
+        listener.getLogger().println("Execute Git number commit back");
+        String pathToPassingDir = build.getWorkspace().getRemote() + "/" + this.filenamePassing;
+        File dirPassing = new File(pathToPassingDir);
+        if(dirPassing.exists()== false)
+        {
+        	dirPassing.mkdir();
+        }
+        FilePath filePathPassing = new FilePath(dirPassing);
+        CopyHiddenFile.copyHiddenFile(this.build.getWorkspace().getRemote(), pathToPassingDir);
         
         if(this.behaviour.equals("Number") == true && this.git.equals("true") == true && this.gitNumberCommitBack.equals("")== false)
         {
+        		String command = "git checkout HEAD~1";
+        		String commandGit = "cd " + pathToPassingDir + " && " + command;
+        		CommandInterpreter runner = new Shell(commandGit);
+                int repetitions = Integer.parseInt(this.gitNumberCommitBack);
+                for (int i = 0; i < repetitions; i++) 
+                {
+                	runner.perform(build, launcher, listener);
+                }
+                
+                this.pathToPassing = pathToPassingDir;
+        }
+        /**
+        if(this.behaviour.equals("Number") == true && this.git.equals("true") == true && this.gitNumberCommitBack.equals("")== false)
+        {
                	String command = "git checkout HEAD~1";
+               	
+               	
                 CommandInterpreter runner = new Shell(command);
                 int repetitions = Integer.parseInt(this.gitNumberCommitBack);
                 for (int i = 0; i < repetitions; i++) 
                 {
                     runner.perform(build, launcher, listener);
                 }
-        }
+        }**/
     }                                                                                                       
     
    

@@ -68,6 +68,18 @@ public final class CrashFinderPublisher extends Notifier {
         
         private final String passwordSvnCommand;
         
+        //private final String automateStackTrace; //automateStackTrace
+        
+        //private final String manuallyStackTrace;
+        
+        private final String stackTrace; 
+        
+        private final String pathToStackTrace;
+        
+        private final String fullNameFailedTestClass; //fullNameFailedTestClass
+        
+        //private final String pathToStackTrace;
+        
        
 
         //private final String numOfCommitsToGoBack;
@@ -103,10 +115,16 @@ public final class CrashFinderPublisher extends Notifier {
                     String usernameSvn,
                     String passwordSvn,
                     String usernameSvnCommand,
-                    String passwordSvnCommand ) 
+                    String passwordSvnCommand,
+                    //String automateStackTrace,
+                    //String manuallyStackTrace,
+                    String stackTrace,
+                    String fullNameFailedTestClass,
+                    String pathToStackTrace)
+                  //  String pathToStackTrace) 
         {
 
-		this.pathToJarFailingVersion = pathToJarFailingVersion;
+    			this.pathToJarFailingVersion = pathToJarFailingVersion;
                 
                 this.pathToJarPassingVersion = pathToJarPassingVersion;
                 
@@ -139,6 +157,18 @@ public final class CrashFinderPublisher extends Notifier {
                 this.commandCheckOutPassing = commandCheckOutPassing;
                 
                 this.pathToSrcFileSystem = pathToSrcFileSystem;
+                
+                //this.pathToStackTrace = pathToStackTrace;
+                
+                //this.automateStackTrace = automateStackTrace;
+                
+                //this.manuallyStackTrace = manuallyStackTrace;
+                this.stackTrace = stackTrace;
+                
+                this .pathToStackTrace = pathToStackTrace;
+                
+                this.fullNameFailedTestClass = fullNameFailedTestClass;
+                		
         }
 
 	/**
@@ -167,12 +197,17 @@ public final class CrashFinderPublisher extends Notifier {
         
         public String getPathToJarFailingVersion() 
         {
-		return pathToJarFailingVersion;
-	}
+        	return pathToJarFailingVersion;
+        }
 
         public String getPathToJarPassingVersion() {
-		return pathToJarPassingVersion;
-	}
+        	return pathToJarPassingVersion;
+        }
+        
+        //public String getPathToStackTrace()
+        //{
+        //	return pathToStackTrace;
+        //}
         
         //public String getSCM()
         //{
@@ -228,7 +263,33 @@ public final class CrashFinderPublisher extends Notifier {
         {
             return this.pathToSrcFileSystem;
         }
+        
+        /**
+        public String getAutomateStackTrace()
+        {
+        	return this.automateStackTrace;
+        }
+        
+        public String getManuallyStackTrace()
+        {
+        	return this.manuallyStackTrace;
+        }
+        **/
+        
+        public String getStackTrace()
+        {
+        	return this.stackTrace;
+        }
                 
+        public String getPathToStackTrace()
+        {
+        	return this.pathToStackTrace;
+        }
+        
+        public String getFullNameFailedTestClass()
+        {
+        	return this.fullNameFailedTestClass;
+        }
                 
         //public String getShellFindSeed() {
 	//	return shellFindSeed;
@@ -290,10 +351,93 @@ public final class CrashFinderPublisher extends Notifier {
                 String absPathToTestsJar = absolutizer.absolutize(this.pathToTestsJar);
 
             
-                //collect filename in workspace
+                //collect filename failing version in workspace
                 HashMap<String,String> mapFilenamePathFailing = ExtractionFilenamePath.extractFilenamePath(pathToWorkspace);
                 Set<String> setFilenameFailing = mapFilenamePathFailing.keySet();
                         
+                
+                String filenamePassing = "PASSING";
+                String absPathPassingDir = pathToWorkspace + "/" + filenamePassing;
+                File filePassingDir = new File(absPathPassingDir);
+                FilePath filePathPassingDir = new FilePath(filePassingDir); 
+                
+                //check out passing version
+                CrashFinderImplPassing getPassing = new CrashFinderImplPassing
+                (
+                				behaviour,
+                				git, svn,
+                				commandCheckOutPassing, absPathSrcFileSystem,
+                				gitNumberCommitBack, svnRevisionNumb,
+                				usernameSvn, passwordSvn,
+                				usernameSvnCommand, passwordSvnCommand,
+                				build, listener,
+                				launcher);
+                filePathWorkspace.act(getPassing);
+                
+                String pathToRootPassing = getPassing.getPathToPassing();
+                
+                HashMap<String,String> mapFilenamePathPassing = ExtractionFilenamePath.extractFilenamePath(pathToRootPassing);
+                Set<String> setFilenamePassing = mapFilenamePathPassing.keySet();
+               
+                //Execute diff
+                listener.getLogger().println("Execute diff");
+                
+                String pathToDiffOutput = pathToWorkspace + "/tmp-diff.diff";
+                File fileDiffOutput = new File(pathToDiffOutput);
+                
+                String regexStartCommandDiff = "diff -ENwbur"; ;
+                String commandDiff = regexStartCommandDiff + " --exclude=\"" + "PASSING\" " + pathToRootPassing + " " + pathToWorkspace + " > " + pathToWorkspace + "/tmp-diff.diff";
+                //String commandDiff = "diff -ENwbur --exclude=\"" + "PASSING\" " +  pathToRootPassing + " " + pathToWorkspace + " > " + pathToWorkspace + "/diff.diff";
+                
+                CommandInterpreter runner = new Shell(commandDiff); 
+                runner.perform(build, launcher, listener);
+                
+                String pathToDiffJava = pathToWorkspace + "/diff.diff";
+                File fileDiffJava = new File(pathToDiffJava);
+                if(fileDiffJava.exists() == false)
+                {
+                	fileDiffJava.createNewFile();
+                }
+                
+                //Extract only diff java
+                String strDiffOutput = DocumentReader.slurpFile(fileDiffOutput);
+                ExtractionDiffJavaFile.extractDiffJavaFile(strDiffOutput, fileDiffJava, regexStartCommandDiff);
+                
+                //delete tmp-diff
+                fileDiffOutput.delete();
+                
+                CrashFinderImplStackTrace crashFinderImplStackTrace = 
+                		new CrashFinderImplStackTrace
+                		(
+                			this.stackTrace,
+                			this.pathToStackTrace,
+                			this.fullNameFailedTestClass,
+							build,
+							listener);
+                
+                crashFinderImplStackTrace.start();
+                String pathToStackTrace = crashFinderImplStackTrace.getFinalPathToStackTrace();
+                String fullNameFailedTestClass = crashFinderImplStackTrace.getFinalFullNameFailedTestClass();
+                
+                listener.getLogger().println("Stacktrace: " + pathToStackTrace);
+                listener.getLogger().println("Failed test: " + fullNameFailedTestClass);
+                
+                
+                
+                
+         
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                /**
                 //copy passing version to directory named FAILING
                 String failingPath = "FAILING";
                 String absPathFailingDir = pathToWorkspace + "/" +  failingPath;
@@ -319,6 +463,7 @@ public final class CrashFinderPublisher extends Notifier {
                                                                     launcher);
                 
                 filePathWorkspace.act(getPassing);
+                
                 
                 
                 //Extraction filenames passing version
@@ -397,6 +542,7 @@ public final class CrashFinderPublisher extends Notifier {
                             mapFilenamePathPassing.entrySet());*/
 
              
+              /**
               String absPathToFinalDiffFile = logger.createFileInSubdirectory(absPathDiffLog, "diff.diff");
               Collection<String> diffFiles = new ArrayList<String>();
 
@@ -531,15 +677,16 @@ public final class CrashFinderPublisher extends Notifier {
                             failingDumpFile));
 
                     FileUtils.deleteDirectory(new File(absPathFailingDir));
-                    
-                } catch(Exception e) {
-                    FileUtils.deleteDirectory(new File(absPathFailingDir));
-                    throw new RuntimeException(e);
-                }
+                    **/
+                //} catch(Exception e) {
+                    //FileUtils.deleteDirectory(new File(absPathFailingDir));
+                    //throw new RuntimeException(e);
+                //}
                 
                
             }
-           
+           	
+                
             return true;
              
         }

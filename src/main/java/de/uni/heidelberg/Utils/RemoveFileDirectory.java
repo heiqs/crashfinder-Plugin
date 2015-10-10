@@ -23,7 +23,7 @@
  */
 package de.uni.heidelberg.Utils;
 
-import static de.uni.heidelberg.PlugIn.CrashFinderImplStackTrace.listf;
+import static de.uni.heidelberg.PlugIn.CrashFinderImplSearchStackTrace.listf;
 
 import java.io.*;
 import java.nio.file.Files;
