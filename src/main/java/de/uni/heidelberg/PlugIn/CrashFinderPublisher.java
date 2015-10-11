@@ -416,11 +416,24 @@ public final class CrashFinderPublisher extends Notifier {
 							listener);
                 
                 crashFinderImplStackTrace.start();
-                String pathToStackTrace = crashFinderImplStackTrace.getFinalPathToStackTrace();
-                String fullNameFailedTestClass = crashFinderImplStackTrace.getFinalFullNameFailedTestClass();
+                ArrayList<String> listPathToStackTrace = crashFinderImplStackTrace.getListPathToStackTrace();
+                ArrayList<String> listFullnameFailedTest = crashFinderImplStackTrace.getListNameFailedTest();
                 
-                listener.getLogger().println("Stacktrace: " + pathToStackTrace);
-                listener.getLogger().println("Failed test: " + fullNameFailedTestClass);
+                for(int i = 0 ; i < listPathToStackTrace.size(); i++)
+                {
+                	listener.getLogger().println("Path to stack trace: " + listPathToStackTrace.get(i));
+                }
+                
+                for (int j = 0 ; j < listFullnameFailedTest.size() ; j++)
+                {
+                	listener.getLogger().println("Full name failed test class: " + listFullnameFailedTest.get(j));
+                }
+                
+                //String pathToStackTrace = crashFinderImplStackTrace.getFinalPathToStackTrace();
+                //String fullNameFailedTestClass = crashFinderImplStackTrace.getFinalFullNameFailedTestClass();
+                
+                //listener.getLogger().println("Stacktrace: " + pathToStackTrace);
+                //listener.getLogger().println("Failed test: " + fullNameFailedTestClass);
                 
                 
                 

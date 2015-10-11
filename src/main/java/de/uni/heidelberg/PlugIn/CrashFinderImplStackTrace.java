@@ -2,7 +2,10 @@ package de.uni.heidelberg.PlugIn;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
+import de.uni.heidelberg.Utils.DocumentReader;
+import de.uni.heidelberg.Utils.FilePathAbsolutizer;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
 
@@ -17,9 +20,11 @@ public class CrashFinderImplStackTrace {
 	
 	private String fullNameFailedTestClass;
 	
-	private String finalPathToStackTrace = "";
 	
-	private String finalFullNameFailedTestClass = "";
+	
+	private ArrayList<String> listPathToStackTrace;
+	
+	private ArrayList<String> listFullNameFailedTest;
 	
 	private AbstractBuild build;
 	
@@ -33,22 +38,32 @@ public class CrashFinderImplStackTrace {
 									 AbstractBuild build,
 									 BuildListener listener)
 	{
-		//this.automateStackTrace = automateStackTrace;
-		//this.manuallyStackTrace = manuallyStackTrace;
 		this.stackTrace = stackTrace;
 		this.pathToStackTrace = pathToStackTrace;
 		this.fullNameFailedTestClass = fullNameFailedTestClass;
 		this.build = build;
 		this.listener = listener;
+		this.listPathToStackTrace = new ArrayList<String>();
+		this.listFullNameFailedTest = new ArrayList<String>();
 	}
 	
 	public void start() throws IOException
 	{
 		handleAutomate();
 		handleManual();
-		
 	}
 	
+	public ArrayList<String> getListPathToStackTrace()
+	{
+		return this.listPathToStackTrace;
+	}
+	
+	public ArrayList<String> getListNameFailedTest()
+	{
+		return this.listFullNameFailedTest;
+	}
+	
+	/**
 	public String getFinalPathToStackTrace()
 	{
 		return this.finalPathToStackTrace;
@@ -57,7 +72,7 @@ public class CrashFinderImplStackTrace {
 	public String getFinalFullNameFailedTestClass()
 	{
 		return this.fullNameFailedTestClass;
-	}
+	}**/
 	
 	public void handleAutomate() throws IOException
 	{
@@ -65,8 +80,22 @@ public class CrashFinderImplStackTrace {
 		{
 			//listener.getLogger().println("Enter automate");
 			String pathToWorkspace = this.build.getWorkspace().getRemote();
-			this.finalPathToStackTrace = CrashFinderImplSearchStackTrace.searchFileStackTrace(pathToWorkspace,this.listener);
-			this.finalFullNameFailedTestClass = CrashFinderImplSearchStackTrace.extractTestClass(new File(this.finalPathToStackTrace));
+			FilePathAbsolutizer filePathAbsolutizer = new FilePathAbsolutizer(pathToWorkspace);
+			String pathResult = filePathAbsolutizer.absolutize("../");
+			String pathToLogLastFailedBuild = pathResult + "/builds/lastFailedBuild/log";
+			File fileLogLastFailedBuild = new File(pathToLogLastFailedBuild);
+			
+			this.listPathToStackTrace = CrashFinderImplSearchStackTrace.searchFileStackTrace(pathToWorkspace);
+			//this.listFullNameStackTrace = CrashFinderImplSearchStackTrace.extractTestClass(new File(this.finalPathToStackTrace));
+			
+			//String pathToLastFailedBuildLog = "/home/antsaharinala/BugLocator/WorkspaceNetbeans/BugLocator/work/jobs/musicfailingVersion/builds/lastFailedBuild/log";
+			//File fileLastFailedBuildLog = new File(pathToLastFailedBuildLog);
+			String contentLog = DocumentReader.slurpFile(fileLogLastFailedBuild);
+			//ArrayList<String> listTest = new ArrayList<String> ();
+			//ArrayList<String> listFailedTest = new ArrayList<String>();
+			
+			//listFailedTest = CrashFinderExtractionFullnameFailedTest.extractClassNameFailedTest(contentLog);
+			this.listFullNameFailedTest = CrashFinderImplExtractionNameFailedTest.extractClassNameFailedTest(contentLog);
 		}
 	}
 	
@@ -74,9 +103,8 @@ public class CrashFinderImplStackTrace {
 	{
 		if(this.stackTrace.equals("manually") == true && this.pathToStackTrace.equals("") ==false && this.fullNameFailedTestClass.equals("") == false)
 		{
-			//listener.getLogger().println("Enter manual");
-			this.finalFullNameFailedTestClass = this.fullNameFailedTestClass;
-			this.finalPathToStackTrace = this.pathToStackTrace;
+			this.listFullNameFailedTest.add(fullNameFailedTestClass);
+			this.listPathToStackTrace.add(pathToStackTrace);
 		}
 	}
 }

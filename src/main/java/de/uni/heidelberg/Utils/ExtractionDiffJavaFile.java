@@ -25,10 +25,12 @@ public class ExtractionDiffJavaFile {
 			    if(matcher.find())
 			    {
 			    	output = output + strFound;
-			    //	System.out.println("Found: " + strFound);
-			    }
+			    	//System.out.println("Found: " + strFound);
+			    	
+			    }//end if
 			    
-			}
+			}//end while
+			
 			DocumentWriter.writeDocument(output, fileOutput);
 	}
 }
