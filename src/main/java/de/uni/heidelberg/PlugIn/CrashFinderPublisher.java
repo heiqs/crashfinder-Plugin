@@ -7,7 +7,9 @@ package de.uni.heidelberg.PlugIn;
 
 import com.google.common.base.Joiner;
 import de.uni.heidelberg.CrashFinder.JenkinsCrashFinderImplementation;
-import de.uni.heidelberg.CrashFinder.JenkinsCrashFinderRunner;
+//import de.uni.heidelberg.CrashFinder.JenkinsCrashFinderRunner;
+import de.uni.heidelberg.CrashFinder.JenkinsCrashFinderRunnerFailing;
+import de.uni.heidelberg.CrashFinder.JenkinsCrashFinderRunnerPassing;
 import de.uni.heidelberg.Utils.*;
 import hudson.EnvVars;
 import hudson.Extension;
@@ -99,12 +101,12 @@ public final class CrashFinderPublisher extends Notifier {
          
     	@DataBoundConstructor
 	public CrashFinderPublisher(
+			
                     String pathToJarFailingVersion,
                     String pathToJarPassingVersion,
                     String pathToLogPathDir,
                     String pathToTestsJar,
                     String pathToCrashFinderJar,
-                    //String SCM,
                     String behaviour,
                     String git,
                     String svn,
@@ -116,12 +118,10 @@ public final class CrashFinderPublisher extends Notifier {
                     String passwordSvn,
                     String usernameSvnCommand,
                     String passwordSvnCommand,
-                    //String automateStackTrace,
-                    //String manuallyStackTrace,
                     String stackTrace,
                     String fullNameFailedTestClass,
                     String pathToStackTrace)
-                  //  String pathToStackTrace) 
+                  
         {
 
     			this.pathToJarFailingVersion = pathToJarFailingVersion;
@@ -133,8 +133,6 @@ public final class CrashFinderPublisher extends Notifier {
                 this.pathToTestsJar = pathToTestsJar;
                 
                 this.pathToCrashFinderJar = pathToCrashFinderJar;
-                
-                //this.SCM = SCM;
                 
                 this.svn = svn;
                 
@@ -158,11 +156,6 @@ public final class CrashFinderPublisher extends Notifier {
                 
                 this.pathToSrcFileSystem = pathToSrcFileSystem;
                 
-                //this.pathToStackTrace = pathToStackTrace;
-                
-                //this.automateStackTrace = automateStackTrace;
-                
-                //this.manuallyStackTrace = manuallyStackTrace;
                 this.stackTrace = stackTrace;
                 
                 this .pathToStackTrace = pathToStackTrace;
@@ -311,7 +304,10 @@ public final class CrashFinderPublisher extends Notifier {
             }else
             {
              
-            	  CrashFinderImplException crashFinderImplException = new CrashFinderImplException(
+            	
+            	//listener.getLogger().println("Get project name: " + projectName);
+            	
+            	CrashFinderImplException crashFinderImplException = new CrashFinderImplException(
                   		pathToLogPathDir,
               			pathToJarFailingVersion,
               	        pathToJarPassingVersion,
@@ -352,10 +348,9 @@ public final class CrashFinderPublisher extends Notifier {
 
             
                 //collect filename failing version in workspace
-                HashMap<String,String> mapFilenamePathFailing = ExtractionFilenamePath.extractFilenamePath(pathToWorkspace);
-                Set<String> setFilenameFailing = mapFilenamePathFailing.keySet();
+                //HashMap<String,String> mapFilenamePathFailing = ExtractionFilenamePath.extractFilenamePath(pathToWorkspace);
+                //Set<String> setFilenameFailing = mapFilenamePathFailing.keySet();
                         
-                
                 String filenamePassing = "PASSING";
                 String absPathPassingDir = pathToWorkspace + "/" + filenamePassing;
                 File filePassingDir = new File(absPathPassingDir);
@@ -376,9 +371,6 @@ public final class CrashFinderPublisher extends Notifier {
                 
                 String pathToRootPassing = getPassing.getPathToPassing();
                 
-                HashMap<String,String> mapFilenamePathPassing = ExtractionFilenamePath.extractFilenamePath(pathToRootPassing);
-                Set<String> setFilenamePassing = mapFilenamePathPassing.keySet();
-               
                 //Execute diff
                 listener.getLogger().println("Execute diff");
                 
@@ -429,23 +421,147 @@ public final class CrashFinderPublisher extends Notifier {
                 	listener.getLogger().println("Full name failed test class: " + listFullnameFailedTest.get(j));
                 }
                 
-                //String pathToStackTrace = crashFinderImplStackTrace.getFinalPathToStackTrace();
-                //String fullNameFailedTestClass = crashFinderImplStackTrace.getFinalFullNameFailedTestClass();
+                /**
+                //this.pathToStackTrace = listPathToStackTrace.get(0);
+                //Create log directory
+                CrashFinderImplLog logger = new CrashFinderImplLog(absPathLogDir);
+                listener.getLogger().println("Log path: " + absPathLogDir);
                 
-                //listener.getLogger().println("Stacktrace: " + pathToStackTrace);
-                //listener.getLogger().println("Failed test: " + fullNameFailedTestClass);
-                
-                
-                
+                //Diff log
+                String logDiff = "Diff";
+                String absPathDiffLog = logger.createSubdirectory(logDiff);
+                //move diff file to Log/Diff directory
+                FileUtils.moveFileToDirectory(fileDiffJava, new File(absPathDiffLog),false);
+
+                //stacktrace file
+                String logStackTrace = "log-stacktrace.txt";
+                String pathToStackTrace = logger.createFile(logStackTrace);
+
+                //path to directory containing the instrumented jar
+                String logInstr = "Instrumentation";
+                String pathToLogInstr = logger.createSubdirectory(logInstr);
+
+                //output after executing diff command
+                String absPathToDiffFile = "";
+                 
+                //Result slicing
+                String logSlicing = "Slicing";
+                String pathToLogSlicing = logger.createSubdirectory(logSlicing);
+                String filenameSlicingPassing = "dumpslice_passing.txt";
+                String filenameSlicingFailing = "dumpslice_failing.txt";
+                String pathToLogSlicingPassing = logger.createFileInSubdirectory(pathToLogSlicing,filenameSlicingPassing );
+                String pathToLogSlicingFailing = logger.createFileInSubdirectory(pathToLogSlicing, filenameSlicingFailing);
+
+                String pathToLogDiffPassing = logger.createFileInSubdirectory(absPathDiffLog,"log-diff-passing.txt" );
+                String pathToLogDiffFailing = logger.createFileInSubdirectory(absPathDiffLog, "log-diff-failing.txt");
+
+                //String nameInstrJarPassing =  new File(pathToJarPassingVersion).getName().replace(".jar", "-passing-instr.jar");
+                //String nameInstrJarFailing =  new File(pathToJarFailingVersion).getName().replace(".jar", "-failing-instr.jar");
+                String nameInstrJarPassing = new File(absPathJarPassing).getName().replace(".jar", "-passsing-instr.jar");
+                String nameInstrJarFailing = new File(absPathJarFailing).getName().replace(".jar", "-failing-instr.jar");
+
+                String pathToInstrJarPassing = logger.createFileInSubdirectory(pathToLogInstr,nameInstrJarPassing);
+                String pathToInstrJarFailing = logger.createFileInSubdirectory(pathToLogInstr,nameInstrJarFailing);
+
+               EnvVars envVarPassing = build.getEnvironment(listener);
+               envVarPassing.put("INSTR_PASSING_VERSION", pathToInstrJarPassing);
+
+               EnvVars envVarFailing = build.getEnvironment(listener);
+               envVarFailing.put("INSTR_FAILING_VERSION", pathToInstrJarFailing);
                 
          
+                //run buglocator on failing version
+               listener.getLogger().println("Runnig buglocator on failing version");
+               JenkinsCrashFinderImplementation JenkCrashFinderFailing = new
+                       JenkinsCrashFinderImplementation(pathToDiffJava,
+                    		   							pathToLogDiffPassing, 
+                    		   							pathToStackTrace,
+                    		   							absPathJarPassing,
+                    		   							pathToInstrJarPassing,
+                    		   							pathToLogSlicingPassing,
+                    		   							pathToWorkspace, 
+                    		   							listener,
+                    		   							build, 
+                    		   							launcher);
+               
+               JenkinsCrashFinderRunnerFailing runnerFailing = new JenkinsCrashFinderRunnerFailing(JenkCrashFinderFailing,listener);
+               runnerFailing.runner();
+               String seed = runnerFailing.getSeed();
+               listener.getLogger().println("Seed: " + seed);**/
+               
+               /**
+               //run buglocator on passing version
+               listener.getLogger().println("Running buglocator on passing version");
+               JenkinsCrashFinderImplementation JenkinsCrashFinderPassing = new JenkinsCrashFinderImplementation(pathToDiffJava,
+            		   																							 pathToLogDiffFailing, 
+            		   																							 pathToStackTrace,
+            		   																							 absPathJarFailing,
+            		   																							 pathToInstrJarFailing,
+            		   																							 pathToLogSlicingFailing,
+            		   																							 pathToWorkspace, 
+            		   																							 listener,
+            		   																							 build, 
+            		   																							 launcher);
+               	JenkinsCrashFinderRunnerPassing runnerPassing = new JenkinsCrashFinderRunnerPassing(JenkinsCrashFinderPassing,listener,seed);
+                runnerPassing.runner();
+                
+                //execute test on instrumented jar passing version
+                listener.getLogger().println("Downloading junit and " +
+                        "hamcrest...");
+                String mavenBaseUrl = "http://repo1.maven.org/maven2/";
+                String junitUrl = mavenBaseUrl + "junit/junit/4" +
+                				  ".12/junit-4.12.jar";
+                String hamcrestUrl = mavenBaseUrl +
+                					"org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar";
+                File junitJarFile = new File(pathToWorkspace, "target/junit.jar");
+                File hamcrestJarFile = new File(pathToWorkspace,
+                								"target/hamcrest-core.jar");
+                listener.getLogger().println("Downloading junit and hamcrest");
+                FileUtils.copyURLToFile(new URL(junitUrl), junitJarFile);
+                FileUtils.copyURLToFile(new URL(hamcrestUrl), hamcrestJarFile);
+
+                Collection<String> commonJars = Arrays.asList(
+                		absPathToCrashFinderJar,
+                		absPathToTestsJar,
+                		junitJarFile.getCanonicalPath(),
+                		hamcrestJarFile.getCanonicalPath()
+                		);
+                Collection<String> passingJars = new ArrayList<String>(commonJars);
+                passingJars.add(pathToInstrJarPassing);
+                Collection<String> failingJars = new ArrayList<String>(commonJars);
+                failingJars.add(pathToInstrJarFailing);
                 
                 
+                String testClass = CrashFinderImplSearchStackTrace.extractTestClass(new File(pathToStackTrace));
+                listener.getLogger().println("Test class: " + testClass);
+                String testCommandTemplate = "java -cp \"%s\" org.junit" +
+                ".runner.JUnitCore " + testClass;
                 
+                //execute test on passing version
+                listener.getLogger().println("Executing test on failing version");
+                String commandTestFailingVersion = String.format
+                        (testCommandTemplate, Joiner.on(':').join
+                                (failingJars));
+                listener.getLogger().println("Command re-run test failing version: " + commandTestFailingVersion);
+                CommandInterpreter runnerTestInstrFailing = new Shell(commandTestFailingVersion);
+                runnerTestInstrFailing.perform(build, launcher, listener);
+
+                String[] dumpFileNames = new File(pathToWorkspace).list
+                        (new FilenameFilter() {
+                    @Override
+                    public boolean accept(File dir, String name) {
+                        return name.startsWith("stmts_dump_");
+                    }
+                });
+                Arrays.sort(dumpFileNames);
+                File passingDumpFile = new File(pathToWorkspace,
+                        dumpFileNames[0]);
+                File failingDumpFile = new File(pathToWorkspace,
+                        dumpFileNames[1]);
+                build.addAction(new ShowDumpsAction(passingDumpFile,
+                        failingDumpFile));
                 
-                
-                
-                
+                **/
                 
                 
                 

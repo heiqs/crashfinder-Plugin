@@ -78,23 +78,19 @@ public class CrashFinderImplStackTrace {
 	{
 		if(this.stackTrace.equals("automatically"))
 		{
-			//listener.getLogger().println("Enter automate");
+			
 			String pathToWorkspace = this.build.getWorkspace().getRemote();
+			String projectName = this.build.getProject().getName();
 			FilePathAbsolutizer filePathAbsolutizer = new FilePathAbsolutizer(pathToWorkspace);
+			
 			String pathResult = filePathAbsolutizer.absolutize("../");
-			String pathToLogLastFailedBuild = pathResult + "/builds/lastFailedBuild/log";
+			//String projectName = build.getProject().getAbsoluteUrl();
+			String pathToLogLastFailedBuild = pathResult + "/" + "builds/lastFailedBuild/log";
+			listener.getLogger().println("Path last failed build: " + pathToLogLastFailedBuild);
 			File fileLogLastFailedBuild = new File(pathToLogLastFailedBuild);
 			
 			this.listPathToStackTrace = CrashFinderImplSearchStackTrace.searchFileStackTrace(pathToWorkspace);
-			//this.listFullNameStackTrace = CrashFinderImplSearchStackTrace.extractTestClass(new File(this.finalPathToStackTrace));
-			
-			//String pathToLastFailedBuildLog = "/home/antsaharinala/BugLocator/WorkspaceNetbeans/BugLocator/work/jobs/musicfailingVersion/builds/lastFailedBuild/log";
-			//File fileLastFailedBuildLog = new File(pathToLastFailedBuildLog);
 			String contentLog = DocumentReader.slurpFile(fileLogLastFailedBuild);
-			//ArrayList<String> listTest = new ArrayList<String> ();
-			//ArrayList<String> listFailedTest = new ArrayList<String>();
-			
-			//listFailedTest = CrashFinderExtractionFullnameFailedTest.extractClassNameFailedTest(contentLog);
 			this.listFullNameFailedTest = CrashFinderImplExtractionNameFailedTest.extractClassNameFailedTest(contentLog);
 		}
 	}

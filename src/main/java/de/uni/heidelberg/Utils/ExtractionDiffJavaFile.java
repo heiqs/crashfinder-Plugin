@@ -10,9 +10,7 @@ public class ExtractionDiffJavaFile {
 	public static void extractDiffJavaFile(String strInputDiff, File fileOutput, String regexStartCommandDiff) throws IOException
 	{
 			String output = "";
-			//String regex = "(?<=" + regexStartCommandDiff + ")" + "(.*?)" + "(?=" + regexStartCommandDiff + ")"; 
 			String regex = regexStartCommandDiff + "(.*?)" + "(?=" + regexStartCommandDiff + ")";
-			//System.out.println("Regex: " + regex);
 			Pattern p = Pattern.compile(regex, Pattern.DOTALL);
 			Matcher m = p.matcher(strInputDiff);
 			while(m.find())
@@ -25,11 +23,9 @@ public class ExtractionDiffJavaFile {
 			    if(matcher.find())
 			    {
 			    	output = output + strFound;
-			    	//System.out.println("Found: " + strFound);
-			    	
-			    }//end if
+			    }
 			    
-			}//end while
+			}
 			
 			DocumentWriter.writeDocument(output, fileOutput);
 	}

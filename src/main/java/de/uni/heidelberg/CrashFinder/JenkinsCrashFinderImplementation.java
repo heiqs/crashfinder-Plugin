@@ -10,6 +10,8 @@ import com.ibm.wala.ipa.slicer.Slicer.DataDependenceOptions;
 import com.ibm.wala.ipa.slicer.Statement;
 import com.ibm.wala.shrikeCT.InvalidClassFileException;
 import com.ibm.wala.util.CancelException;
+
+
 import de.hdu.pvs.crashfinder.analysis.FindSeed;
 import de.hdu.pvs.crashfinder.analysis.IRStatement;
 import de.hdu.pvs.crashfinder.analysis.Slicing;
@@ -17,7 +19,11 @@ import de.hdu.pvs.crashfinder.analysis.SlicingOutput;
 import de.hdu.pvs.crashfinder.instrument.InstrumentStats;
 import de.hdu.pvs.crashfinder.instrument.RelatedStmtInstrumenter;
 import de.hdu.pvs.crashfinder.util.WALAUtils;
+import hudson.Launcher;
+import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
+import hudson.tasks.Shell;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -48,6 +54,8 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
     
     private final String pathToExclusionFile="resources/JavaAllExclusions.txt";
     
+    private final String diffPassingPython="resources/diff.py";
+    
     private String pathToStackTrace;
     
     private String pathToJarFile;
@@ -58,13 +66,18 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
     
     private BuildListener listener;
     
+    private AbstractBuild build;
+    
+    private Launcher launcher;
+    
+    private String seed = "";
     
     
-   
     public JenkinsCrashFinderImplementation(String pathToDiffOut, String pathToLogDiff,
                                             String pathToStackTrace, String pathToJarFile,
                                             String pathToInstrumentedJarFile, String pathToLogSlicing,
-                                            String canonicalPathToWorkspaceDir, BuildListener listener)
+                                            String canonicalPathToWorkspaceDir, BuildListener listener,
+                                            AbstractBuild build, Launcher launcher)
     {
         this.pathToDiffOut = pathToDiffOut;
         this.pathToLogDiff = pathToLogDiff;
@@ -74,6 +87,8 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
         this.canonicalPathToWorkspaceDir = canonicalPathToWorkspaceDir;
         this.pathToLogSlicing = pathToLogSlicing;
         this.listener = listener;
+        this.build = build;
+        this.launcher = launcher;
         
     }
     
@@ -87,6 +102,11 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
         this.pathToStackTrace = "";
         this.pathToLogSlicing = "";
         this.canonicalPathToWorkspaceDir = "";
+    }
+    
+    public String getSeed()
+    {
+    	return this.seed;
     }
     
     public String getPathToLogSlicing()
@@ -206,16 +226,18 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
     }**/
 
     @Override
-    public Statement findSeedStatement(String pathToStackTrace, Slicing slicing)throws IOException
+    public Statement findSeedStatementFailing(String pathToStackTrace, Slicing slicing)throws IOException
     {
 		FindSeed computeSeed = new FindSeed();
 		int lineNumber = computeSeed.computeSeed(pathToStackTrace)
 				.getLineNumber();
-		String seedClass = computeSeed.computeSeed(pathToStackTrace)
-				.getSeedClass();
-		listener.getLogger().println("Seed class: " + seedClass);
+		//String seedClass = computeSeed.computeSeed(pathToStackTrace)
+		//		.getSeedClass();
+		this.seed = computeSeed.computeSeed(pathToStackTrace)
+					.getSeedClass();
+		listener.getLogger().println("Seed class: " + seed);
 		try {
-			Statement result = slicing.extractStatementfromException(seedClass,
+			Statement result = slicing.extractStatementfromException(seed,
 					lineNumber);
 			return result;
 		} catch (InvalidClassFileException e) {
@@ -342,5 +364,16 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
     	}
         return slice;
     }
+
+	@Override
+	public Statement findSeedStatementPassing(String seed, File fileDiff) throws IOException, InterruptedException {
+		// TODO Auto-generated method stub
+		String command = "python " + diffPassingPython + " " + fileDiff.getAbsolutePath() + " " + seed;
+		this.listener.getLogger().println("Execute feed statement passing version");
+		this.listener.getLogger().println("Command: " + command);
+		
+		new Shell(command).perform(this.build, this.launcher, this.listener);
+		return null;
+	}
     
 }

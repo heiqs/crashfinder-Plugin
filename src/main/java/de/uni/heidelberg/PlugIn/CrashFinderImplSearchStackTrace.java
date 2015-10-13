@@ -77,9 +77,29 @@ public class CrashFinderImplSearchStackTrace{
 		
         boolean isStackTrace = false;
 		String fileContent = DocumentReader.slurpFile(file);
-		boolean isHTMLXML = DetectionXMLHTML.isHtml(fileContent);
+		//boolean isHTMLXML = DetectionXMLHTML.isHtml(fileContent);
+		if(file.getName().endsWith(".java") == false ||file.getName().endsWith(".html") == false || file.getName().endsWith(".xml")== false )
+		{
+			//if(isHTMLXML == false)
+			//{
+				String regexAlt = "(Caused by:\\s?(.*)Exception:(\\s+at(.*)|\\s+at)+)?";
+	            String regexText = "([a-zA-Z\\p{Punct}]+)Exception(:.*)?(\\n\\t?at.*)";
+	            Pattern pattern = Pattern.compile(regexText);
+	            Matcher matcher = pattern.matcher(fileContent);
+	            if(matcher.find())
+	            {
+	            	 String content = matcher.group();
+	            	 System.out.println("Content: " + content);
+	                 isStackTrace = true;
+	                 
+	             }
+			//}
+		}
+		
+		/**
 		if(isHTMLXML)
 		{
+			
 			String startTag =  "\\<\\w+((\\s+\\w+(\\s*\\=\\s*(?:\".*?\"|'.*?'|[^'\"\\>\\s]+))?)+\\s*|\\s*)\\>";
 			String endTag = "\\</\\w+\\>";
 			
@@ -102,7 +122,7 @@ public class CrashFinderImplSearchStackTrace{
 		//case txt file
 		}else
 		{
-			 System.out.println("TXT FILE");
+			 
              String regexAlt = "(Caused by:\\s?(.*)Exception:(\\s+at(.*)|\\s+at)+)?";
              String regexText = "([a-zA-Z\\p{Punct}]+)Exception(:.*)?(\\n\\t?at.*)";
              //String regexText = "([a-zA-Z]+)Exception:\\s+(.*)(\\s+(.*)|\\s+at)+" ; //+ regexAlt;
@@ -120,7 +140,7 @@ public class CrashFinderImplSearchStackTrace{
              }//end while
 			
 		}
-			
+		**/
         return isStackTrace;
 		
 	}
