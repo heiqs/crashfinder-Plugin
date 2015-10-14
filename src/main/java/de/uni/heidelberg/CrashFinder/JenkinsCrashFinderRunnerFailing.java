@@ -21,7 +21,9 @@ public class JenkinsCrashFinderRunnerFailing implements CrashFinderRunner{
 	    
 	    private BuildListener listener;
 	    
-	    private String seed = "";
+	    private String seed = null;
+
+	private Statement seedStatement = null;
 	    
 	    //private Statement seedStatementFailing;
 	    
@@ -34,6 +36,9 @@ public class JenkinsCrashFinderRunnerFailing implements CrashFinderRunner{
 	    
 	    public String getSeed()
 	    {
+			if (this.seed == null) {
+				throw new NullPointerException("Seed has not been computed.");
+			}
 	    	return this.seed;
 	    }
 	    
@@ -50,12 +55,18 @@ public class JenkinsCrashFinderRunnerFailing implements CrashFinderRunner{
 	            
 	            //1. Slicing
 	            Slicing slicing = crashFinderImpl.initializeSlicing(pathToJar);
+				if (slicing == null) {
+					throw new NullPointerException("Slicing is null");
+				}
 	            
 	            //Statement seedStatement = null;
 	            //seedStatement = crashFinderImpl.findSeedStatement(pathToStackTrace, slicing);
 	            Statement seedStatement = crashFinderImpl.findSeedStatementFailing(pathToStackTrace, slicing);
-	            
+	            this.seed = crashFinderImpl.getSeed();
+				this.seedStatement = seedStatement;
+				listener.getLogger().println("Seed runner: " + seed);
 	            listener.getLogger().println("Statement: " + seedStatement.toString());
+				//this.seed = seedStatement.toString();
 	            //3.Backward slicing
 	            Collection<? extends Statement> slice = crashFinderImpl.backWardSlicing(seedStatement, slicing, pathToLogSlicing);
 	            listener.getLogger().println("---START DUMP SLICE---");
@@ -92,7 +103,7 @@ public class JenkinsCrashFinderRunnerFailing implements CrashFinderRunner{
 	                    if (m.find())
 	                    {
 	                        String strFound = m.group();
-	                        String absPath = strFound.replace("+++ ", "");
+	                        String absPath = strFound.replace("+", "").trim();
 	                        File javaFile = new File(absPath);
 	                        String packageName = new PackageExtractor(javaFile)
 	                                .extractPackageName();
@@ -107,6 +118,9 @@ public class JenkinsCrashFinderRunnerFailing implements CrashFinderRunner{
 	                }
 	            } catch (IOException e)
 	            {
+					RuntimeException re = new RuntimeException(e);
+					re.setStackTrace(e.getStackTrace());
+					throw e;
 	            } finally {
 	                if (output != null) {
 	                    output.close();
@@ -119,7 +133,7 @@ public class JenkinsCrashFinderRunnerFailing implements CrashFinderRunner{
 	            crashFinderImpl.instrument(pathToJar,pathToInstrJar, intersection);
 	            
 	            //get seed for failing
-	            this.seed = crashFinderImpl.getSeed();
+//	            this.seed = crashFinderImpl.getSeed();
 	            
 	            
 	        } catch (IOException ex) 
@@ -129,7 +143,13 @@ public class JenkinsCrashFinderRunnerFailing implements CrashFinderRunner{
 	        
 	        
 	    }
-	    
-	
 
+
+	public Statement getSeedStatement() {
+		if (this.seedStatement == null) {
+			throw new NullPointerException("Seed statement has not been " +
+					"computed.");
+		}
+		return this.seedStatement;
+	}
 }

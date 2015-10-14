@@ -8,35 +8,19 @@ import java.io.IOException;
 
 public class ShowDumpsAction implements Action {
 
-    private final File passingDumpFile;
-    private final File failingDumpFile;
+    private final String passingDumpFile;
+    private final String failingDumpFile;
 
-    public ShowDumpsAction(File passingDumpFile, File failingDumpFile) {
+    public ShowDumpsAction(String passingDumpFile, String failingDumpFile) {
         this.passingDumpFile = passingDumpFile;
         this.failingDumpFile = failingDumpFile;
     }
 
     public String getPassingDumpContent() {
-        try {
-            return FileUtils.readFileToString(passingDumpFile);
-        } catch (IOException e) {
-            return "Could not read passing dump file:\n" + e.getStackTrace();
-        }
-    }
-
-    public String getFailingDumpContent() {
-        try {
-            return FileUtils.readFileToString(failingDumpFile);
-        } catch (IOException e) {
-            return "Could not read failing dump file:\n" + e.getStackTrace();
-        }
-    }
-
-    public File getPassingDumpFile() {
         return passingDumpFile;
     }
 
-    public File getFailingDumpFile() {
+    public String getFailingDumpContent() {
         return failingDumpFile;
     }
 

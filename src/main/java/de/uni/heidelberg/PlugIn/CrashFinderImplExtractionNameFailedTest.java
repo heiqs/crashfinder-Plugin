@@ -20,7 +20,7 @@ public class CrashFinderImplExtractionNameFailedTest {
 		Pattern pattern = Pattern.compile(regex,Pattern.DOTALL);
 		Matcher matcher = pattern.matcher(input);
 		
-		while(matcher.find())
+		if(matcher.find())
 		{
 			String content = matcher.group();
 			listTest = CrashFinderImplExtractionNameFailedTest.extractAllTest(content);
@@ -39,10 +39,8 @@ public class CrashFinderImplExtractionNameFailedTest {
 		while(matcher.find())
 		{
 			String fullNameTestClass = matcher.group(1);
-			//System.out.println("Class:" + fullNameTestClass);
 			listTests.add(fullNameTestClass);
-			
-		}//end while
+		}
 		
 		return listTests;
 	}

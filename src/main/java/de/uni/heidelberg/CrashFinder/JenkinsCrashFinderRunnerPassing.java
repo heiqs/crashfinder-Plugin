@@ -28,12 +28,16 @@ public class JenkinsCrashFinderRunnerPassing implements CrashFinderRunner{
     
     
     private final JenkinsCrashFinderImplementation crashFinderImpl;
-    
+    private Statement seedStatement;
+
     private BuildListener listener;
     
     private String seed;
     
-    public JenkinsCrashFinderRunnerPassing(JenkinsCrashFinderImplementation crashFinderImpl,BuildListener listener,String seed)
+    public JenkinsCrashFinderRunnerPassing(JenkinsCrashFinderImplementation
+                                                   crashFinderImpl,
+                                           BuildListener listener,String
+                                                   seed)
     {
         this.crashFinderImpl = crashFinderImpl;
         this.listener = listener;
@@ -73,15 +77,15 @@ public class JenkinsCrashFinderRunnerPassing implements CrashFinderRunner{
             
             //Statement seedStatement = null;
             //seedStatement = crashFinderImpl.findSeedStatement(pathToStackTrace, slicing);
-            Statement seedStatement = null;
 			try {
-				seedStatement = crashFinderImpl.findSeedStatementPassing(this.seed, new File(pathToDiffFile));
+                this.seedStatement = crashFinderImpl.findSeedStatementPassing
+                        (this.seed, new File(pathToDiffFile), slicing);
+                this.seed = crashFinderImpl.getSeed();
 			} catch (InterruptedException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
-            
-            listener.getLogger().println("Statement: " + seedStatement.toString());
+
             //3.Backward slicing
             Collection<? extends Statement> slice = crashFinderImpl.backWardSlicing(seedStatement, slicing, pathToLogSlicing);
             listener.getLogger().println("---START DUMP SLICE---");
@@ -118,7 +122,7 @@ public class JenkinsCrashFinderRunnerPassing implements CrashFinderRunner{
                     if (m.find())
                     {
                         String strFound = m.group();
-                        String absPath = strFound.replace("+++ ", "");
+                        String absPath = strFound.replace("+", "").trim();
                         File javaFile = new File(absPath);
                         String packageName = new PackageExtractor(javaFile)
                                 .extractPackageName();
@@ -131,8 +135,8 @@ public class JenkinsCrashFinderRunnerPassing implements CrashFinderRunner{
                         output.printf("%s\r\n", strFound);
                     }
                 }
-            } catch (IOException e)
-            {
+            } catch (IOException e) {
+                throw new RuntimeException(e.getMessage(), e);
             } finally {
                 if (output != null) {
                     output.close();
@@ -147,7 +151,8 @@ public class JenkinsCrashFinderRunnerPassing implements CrashFinderRunner{
             
         } catch (IOException ex) 
         {
-            Logger.getLogger(JenkinsCrashFinderRunnerPassing.class.getName()).log(Level.SEVERE, null, ex);
+//            Logger.getLogger(JenkinsCrashFinderRunnerPassing.class.getName()).log(Level.SEVERE, null, ex);
+            throw new RuntimeException(ex.getMessage(), ex);
         }
         
         

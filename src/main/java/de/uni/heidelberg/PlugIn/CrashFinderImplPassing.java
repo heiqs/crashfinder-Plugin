@@ -278,7 +278,7 @@ public class CrashFinderImplPassing implements FilePath.FileCallable {
         
         if(this.behaviour.equals("Number") == true && this.git.equals("true") == true && this.gitNumberCommitBack.equals("")== false)
         {
-        		String command = "git checkout HEAD~1";
+        		String command = "git stash && git checkout HEAD~1";
         		String commandGit = "cd " + pathToPassingDir + " && " + command;
         		CommandInterpreter runner = new Shell(commandGit);
                 int repetitions = Integer.parseInt(this.gitNumberCommitBack);

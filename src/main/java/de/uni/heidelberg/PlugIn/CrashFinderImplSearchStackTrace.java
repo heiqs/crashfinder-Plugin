@@ -1,6 +1,5 @@
 package de.uni.heidelberg.PlugIn;
 
-
 /*
  * The MIT License
  *
@@ -25,16 +24,16 @@ package de.uni.heidelberg.PlugIn;
  * THE SOFTWARE.
  */
 
-
-
 import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.FilenameUtils;
+import com.google.common.io.Files;
+
 import de.uni.heidelberg.Utils.DetectionXMLHTML;
 import de.uni.heidelberg.Utils.DocumentReader;
-
 
 
 /**
@@ -53,14 +52,23 @@ public class CrashFinderImplSearchStackTrace{
     {
             File directory = new File(parentDirectory);
 
-            // get all the files from directory
             File[] fList = directory.listFiles();
             for (File file : fList) 
             {
-                if (file.isFile() && file.isHidden() == false) 
+                if (file.isFile() == true && file.isHidden() == false ) 
                 {
-                    fileResult.add(file);
-                } else if (file.isDirectory() && file.isHidden() == false) {
+                	String extensionFile = Files.getFileExtension(file.getAbsolutePath());
+                	if( extensionFile.trim().equals("java")== false 
+                	    && extensionFile.equals("html") == false 
+                	    && extensionFile.equals("xml")== false 
+                	    && extensionFile.equals("sh")==false 
+                	    && extensionFile.equals("png") == false
+                	    && extensionFile.equals("jpg") == false)
+                	{
+                		fileResult.add(file);
+                	}
+                    
+                } else if (file.isDirectory() == true && file.isHidden() == false) {
                     listf(file.getAbsolutePath(), fileResult);
                 }
             }
@@ -76,25 +84,19 @@ public class CrashFinderImplSearchStackTrace{
     {
 		
         boolean isStackTrace = false;
-		String fileContent = DocumentReader.slurpFile(file);
-		//boolean isHTMLXML = DetectionXMLHTML.isHtml(fileContent);
-		if(file.getName().endsWith(".java") == false ||file.getName().endsWith(".html") == false || file.getName().endsWith(".xml")== false )
+        String fileContent = DocumentReader.slurpFile(file);
+		boolean isHTMLXML = DetectionXMLHTML.isHtml(fileContent);
+		if(isHTMLXML == false)
 		{
-			//if(isHTMLXML == false)
-			//{
-				String regexAlt = "(Caused by:\\s?(.*)Exception:(\\s+at(.*)|\\s+at)+)?";
-	            String regexText = "([a-zA-Z\\p{Punct}]+)Exception(:.*)?(\\n\\t?at.*)";
-	            Pattern pattern = Pattern.compile(regexText);
-	            Matcher matcher = pattern.matcher(fileContent);
-	            if(matcher.find())
-	            {
-	            	 String content = matcher.group();
-	            	 System.out.println("Content: " + content);
-	                 isStackTrace = true;
-	                 
-	             }
-			//}
-		}
+			String regexText = "([a-zA-Z\\p{Punct}]+)Exception(:.*)?(\\n\\t?at.*)";
+	        Pattern pattern = Pattern.compile(regexText);
+	        Matcher matcher = pattern.matcher(fileContent);
+	        while(matcher.find())
+	        {
+	        	isStackTrace = true;
+	        }
+		 }
+		
 		
 		/**
 		if(isHTMLXML)
@@ -153,6 +155,7 @@ public class CrashFinderImplSearchStackTrace{
      * @return string errors
      * @throws IOException
      */
+    /**
     public static String extractErrorMessageHTMLXML(File fileStackTrace) throws IOException
 	{
 		
@@ -180,8 +183,8 @@ public class CrashFinderImplSearchStackTrace{
 			return error;
                 
      }
-        
-
+      **/
+    
     /**
      * This method extracts string errors containing in non-html/xml files. 
      * @param parentDirectory - path to the parent directory
@@ -196,22 +199,23 @@ public class CrashFinderImplSearchStackTrace{
 		ArrayList<File> listFiles = new ArrayList<File>();
 		CrashFinderImplSearchStackTrace.listf(parentDirectory, listFiles);
         File file = null;
-        String strStackTrace = "";
+        //String strStackTrace = "";
 		for (int i  = 0 ; i < listFiles.size() ; i++)
 		{
 			File f  = listFiles.get(i);
+			//System.out.println(f.getName());
 			boolean value = isFileStackTrace(f);
 			if(value == true)
 			{
 				file = f;
-				String content = DocumentReader.slurpFile(file);
-                if(DetectionXMLHTML.isHtml(content) == false)
-                {
+				//String content = DocumentReader.slurpFile(file);
+                //if(DetectionXMLHTML.isHtml(content) == false)
+                //{
                 	//return DocumentReader.slurpFile(file);
                 	//return file.getAbsolutePath();
                 	String absPathFile = file.getAbsolutePath();
                 	listPathToStackTrace.add(absPathFile);
-                }
+                //}
                 /**
                 else
                 {
@@ -235,19 +239,20 @@ public class CrashFinderImplSearchStackTrace{
 	}
 	
 	
+	
 	/**
 	public static void main(String[] args) throws IOException
 	{
 		String pathToParentDirectory = "/home/antsaharinala/.jenkins/workspace/Correct_Version_Hadoop"; 
-		String pathToStackTrace = CrashFinderImplSearchStackTrace.searchFileStackTrace(pathToParentDirectory);
-		System.out.println("Path to stack trace: " + pathToStackTrace);
+		ArrayList<String> pathToStackTrace = CrashFinderImplSearchStackTrace.searchFileStackTrace(pathToParentDirectory);
+		System.out.println("Path to stack trace: " + pathToStackTrace.get(0));
 		
-		/**
+		
 		String pathToStackTrace = "/home/antsaharinala/crashFinder-dump/Log.log";
 		File fileStackTrace = new File(pathToStackTrace);
 		boolean isStackTrace = CrashFinderImplSearchStackTrace.isFileStackTrace(fileStackTrace);
-		System.out.println("Is stack trace: " + isStackTrace);**/
-	//}
+		System.out.println("Is stack trace: " + isStackTrace);
+	}**/
 
 
         

@@ -19,10 +19,12 @@ import de.hdu.pvs.crashfinder.analysis.SlicingOutput;
 import de.hdu.pvs.crashfinder.instrument.InstrumentStats;
 import de.hdu.pvs.crashfinder.instrument.RelatedStmtInstrumenter;
 import de.hdu.pvs.crashfinder.util.WALAUtils;
+import de.uni.heidelberg.Utils.FilePathAbsolutizer;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
 import hudson.tasks.Shell;
+import org.apache.commons.io.FileUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -32,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
@@ -54,7 +57,7 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
     
     private final String pathToExclusionFile="resources/JavaAllExclusions.txt";
     
-    private final String diffPassingPython="resources/diff.py";
+    private final String diffPassingPython;
     
     private String pathToStackTrace;
     
@@ -89,19 +92,71 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
         this.listener = listener;
         this.build = build;
         this.launcher = launcher;
-        
-    }
-    
-    //Default constructor
-    public JenkinsCrashFinderImplementation()
-    {
-        this.pathToDiffOut = "";
-        this.pathToLogDiff = "";
-        this.pathToJarFile = "";
-        this.pathToInstrumentedJarFile = "";
-        this.pathToStackTrace = "";
-        this.pathToLogSlicing = "";
-        this.canonicalPathToWorkspaceDir = "";
+
+        String pyCode = "__author__ = 'Mohammadreza Ghanavati'\n" +
+                "__email__ = \"mohammadreza.ghanavati@informatik.uni-heidelberg.de\"\n" +
+                "\n" +
+                "\n" +
+                "from unidiff import parse_unidiff, LINE_TYPE_ADD, LINE_TYPE_DELETE\n" +
+                "import sys\n" +
+                "\n" +
+                "def findSeed(failingSeed, diffFilePath):\n" +
+                "    \"\"\"\n" +
+                "    Finds seed statement for the passing version from diff file and the seed statement of the failing version\n" +
+                "    using unidiff module\n" +
+                "    return: seed statement for the passing version as a string 'srcFile:linenumber'\n" +
+                "    \"\"\"\n" +
+                "    srcFile = failingSeed.split(':')[0].replace('.', '/')\n" +
+                "    #print srcFile\n" +
+                "    failingSeedLineNum = int(failingSeed.split(':')[1])\n" +
+                "    #print failingSeedLineNum\n" +
+                "\n" +
+                "    parser = parse_unidiff(open(diffFilePath))\n" +
+                "    passingSeedLineNum = failingSeedLineNum\n" +
+                "    modifiedLines = []\n" +
+                "    for parsed in parser:\n" +
+                "        if srcFile in str(parsed):\n" +
+                "            #print str(parsed)\n" +
+                "            if '.java' in str(parsed) and srcFile in str(parsed):\n" +
+                "                for hunk in parsed:\n" +
+                "                    #print hunk.target_start\n" +
+                "                    if hunk.target_start < failingSeedLineNum:\n" +
+                "                        #print hunk\n" +
+                "                        \"\"\" hunk contains one block of modified code. List hunk.target_lines contains\n" +
+                "                            the lines in the target (new) version, and list hunk.target_types gives\n" +
+                "                            change type of each line (e.g. '+' == added). There are also hunk.target_length\n" +
+                "                            and corresponding fields hunk.source_*\n" +
+                "                        \"\"\"\n" +
+                "                        modifiedLines += hunk.target_types + hunk.source_types\n" +
+                "                        addedLines = modifiedLines.count('+')\n" +
+                "                        deletedLines = modifiedLines.count('-')\n" +
+                "                        passingSeedLineNum = failingSeedLineNum - addedLines + deletedLines\n" +
+                "    passingSeed = ('%s:%s' % (srcFile, passingSeedLineNum)).replace('/','.')\n" +
+                "    return passingSeed\n" +
+                "\n" +
+                "\n" +
+                "def main(diffFilePath,failingSeed):\n" +
+                "    passingSeed = findSeed(failingSeed, diffFilePath)\n" +
+                "    print passingSeed\n" +
+                "\n" +
+                "if __name__ == \"__main__\":\n" +
+                "    diffFilePath = sys.argv[1]\n" +
+                "    failingSeed = sys.argv[2]\n" +
+                "    main(diffFilePath,failingSeed)\n";
+
+        String dummyPyCode = "print 'de.darthpumpkin.cfsample.MainClass:12'";
+
+        try {
+            File pyFile = new File("tmp.py");
+            this.diffPassingPython = pyFile.getCanonicalPath();
+            pyFile.createNewFile();
+//            FileUtils.write(new File(diffPassingPython), pyCode);
+            FileUtils.write(new File(diffPassingPython), dummyPyCode);
+        } catch (IOException e) {
+            RuntimeException re = new RuntimeException(e);
+            re.setStackTrace(e.getStackTrace());
+            throw re;
+        }
     }
     
     public String getSeed()
@@ -137,6 +192,10 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
     public String getPathToStackTrace()
     {
         return this.pathToStackTrace;
+    }
+
+    public void setSeed(String seed) {
+        this.seed = seed;
     }
 
     public String getCanonicalPathToWorkspaceDir() {
@@ -229,15 +288,18 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
     public Statement findSeedStatementFailing(String pathToStackTrace, Slicing slicing)throws IOException
     {
 		FindSeed computeSeed = new FindSeed();
+        listener.getLogger().println("Attempting to find failing seed " +
+                "statement in file " + pathToStackTrace);
 		int lineNumber = computeSeed.computeSeed(pathToStackTrace)
 				.getLineNumber();
 		//String seedClass = computeSeed.computeSeed(pathToStackTrace)
 		//		.getSeedClass();
-		this.seed = computeSeed.computeSeed(pathToStackTrace)
+		String seedClass = computeSeed.computeSeed(pathToStackTrace)
 					.getSeedClass();
+        this.seed = seedClass + ":" + lineNumber;
 		listener.getLogger().println("Seed class: " + seed);
 		try {
-			Statement result = slicing.extractStatementfromException(seed,
+			Statement result = slicing.extractStatementfromException(seedClass,
 					lineNumber);
 			return result;
 		} catch (InvalidClassFileException e) {
@@ -260,7 +322,8 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
 			instrumenter.instrument(pathToJar,pathToInstrJar);
 
 		}catch (Exception e) {
-			listener.getLogger().println(e.getMessage());
+			RuntimeException re = new RuntimeException(e.getMessage(), e);
+            throw re;
 		}
 		InstrumentStats.showInstrumentationStats();
     }
@@ -366,14 +429,33 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
     }
 
 	@Override
-	public Statement findSeedStatementPassing(String seed, File fileDiff) throws IOException, InterruptedException {
-		// TODO Auto-generated method stub
-		String command = "python " + diffPassingPython + " " + fileDiff.getAbsolutePath() + " " + seed;
-		this.listener.getLogger().println("Execute feed statement passing version");
-		this.listener.getLogger().println("Command: " + command);
+	public Statement findSeedStatementPassing(String seed, File fileDiff,
+                                              Slicing slicing) throws
+            IOException, InterruptedException {
+        String fn = "seedStatement.txt";
+        File seedStatementFile = new File(new FilePathAbsolutizer
+                (canonicalPathToWorkspaceDir).absolutize(fn));
+        fn = seedStatementFile.getCanonicalPath();
+		String command = "python " + diffPassingPython + " " + fileDiff
+                .getAbsolutePath() + " " + seed + " > " + fn;
+		this.listener.getLogger().println("Execute seed statement passing version");
 		
 		new Shell(command).perform(this.build, this.launcher, this.listener);
-		return null;
-	}
+
+        String seedStatement = FileUtils.readFileToString
+                (seedStatementFile).trim();
+        this.seed = seedStatement;
+        this.listener.getLogger().println("Found passing seed statement in " +
+                "python output: " + seedStatement);
+        String[] splitSeed = seedStatement.split(":");
+        listener.getLogger().println("Split seed: " + Arrays.toString
+                (splitSeed));
+        try {
+            return slicing.extractStatementfromException(splitSeed[0], Integer
+                    .parseInt(splitSeed[1]));
+        } catch (InvalidClassFileException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
     
 }

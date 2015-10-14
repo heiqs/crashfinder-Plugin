@@ -80,7 +80,7 @@ public class CrashFinderImplStackTrace {
 		{
 			
 			String pathToWorkspace = this.build.getWorkspace().getRemote();
-			String projectName = this.build.getProject().getName();
+			//String projectName = this.build.getProject().getName();
 			FilePathAbsolutizer filePathAbsolutizer = new FilePathAbsolutizer(pathToWorkspace);
 			
 			String pathResult = filePathAbsolutizer.absolutize("../");
@@ -95,12 +95,50 @@ public class CrashFinderImplStackTrace {
 		}
 	}
 	
-	public void handleManual()
+	public void handleManual() 
 	{
 		if(this.stackTrace.equals("manually") == true && this.pathToStackTrace.equals("") ==false && this.fullNameFailedTestClass.equals("") == false)
 		{
 			this.listFullNameFailedTest.add(fullNameFailedTestClass);
 			this.listPathToStackTrace.add(pathToStackTrace);
+			
+		}else if(this.stackTrace.equals("manually") == true && this.pathToStackTrace.equals("") == false && this.fullNameFailedTestClass.equals("")==true)
+		{
+			String pathToWorkspace = this.build.getWorkspace().getRemote();
+			this.listFullNameFailedTest.add(this.fullNameFailedTestClass);
+			try {
+				this.listPathToStackTrace = CrashFinderImplSearchStackTrace.searchFileStackTrace(pathToWorkspace);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}else if(this.stackTrace.equals("manually") == true  && this.pathToStackTrace.equals("")==true && this.fullNameFailedTestClass.equals("")==false)
+		{
+			
+			String pathToWorkspace = this.build.getWorkspace().getRemote();
+			FilePathAbsolutizer filePathAbsolutizer = new FilePathAbsolutizer(pathToWorkspace);
+			String pathResult = null;
+			try {
+				pathResult = filePathAbsolutizer.absolutize("../");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			String pathToLogLastFailedBuild = pathResult + "/" + "builds/lastFailedBuild/log";
+			File fileLogLastFailedBuild = new File(pathToLogLastFailedBuild);
+			String contentLog = null;
+			try {
+				contentLog = DocumentReader.slurpFile(fileLogLastFailedBuild);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			this.listFullNameFailedTest = CrashFinderImplExtractionNameFailedTest.extractClassNameFailedTest(contentLog);
+			//this.listFullNameFailedTest = CrashFinderImplExtractionNameFailedTest.extractClassNameFailedTest();
+			this.listPathToStackTrace.add(pathToStackTrace);
 		}
+		
 	}
 }
