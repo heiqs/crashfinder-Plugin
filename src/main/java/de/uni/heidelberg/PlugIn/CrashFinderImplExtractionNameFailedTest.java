@@ -49,7 +49,8 @@ public class CrashFinderImplExtractionNameFailedTest {
 	{
 		ArrayList<String> listFailedTest = new ArrayList<String> ();
 		String beginRegex = "Results\\s?:\\n+";
-		String regex = beginRegex + "Failed tests: " + "(.*?)" + "\\n";
+		//String regex = beginRegex + "Failed tests: " + "(.*?)" + "\\n";
+		String regex = beginRegex  + "(.*?)" + ":\\s*" + "(.*?)" + "\\n";
 		Pattern pattern = Pattern.compile(regex,Pattern.DOTALL);
 		Matcher matcher = pattern.matcher(input);
 		while(matcher.find())
@@ -61,11 +62,11 @@ public class CrashFinderImplExtractionNameFailedTest {
 				if(strFound.contains(fullNameTest))
 			    {
 					listFailedTest.add(fullNameTest);
-			    }//end if 
+			    }
 				
-			}//end for
+			}
 			
-		}//end while
+		}
 		
 		return listFailedTest;
 		

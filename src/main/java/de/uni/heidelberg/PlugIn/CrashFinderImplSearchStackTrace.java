@@ -59,11 +59,12 @@ public class CrashFinderImplSearchStackTrace{
                 {
                 	String extensionFile = Files.getFileExtension(file.getAbsolutePath());
                 	if( extensionFile.trim().equals("java")== false 
-                	    && extensionFile.equals("html") == false 
-                	    && extensionFile.equals("xml")== false 
-                	    && extensionFile.equals("sh")==false 
-                	    && extensionFile.equals("png") == false
-                	    && extensionFile.equals("jpg") == false)
+                	    && extensionFile.trim().equals("html") == false 
+                	    && extensionFile.trim().equals("xml")== false 
+                	    && extensionFile.trim().equals("sh")==false 
+                	    && extensionFile.trim().equals("png") == false
+                	    && extensionFile.trim().equals("jpg") == false
+                	    )
                 	{
                 		fileResult.add(file);
                 	}
@@ -215,6 +216,7 @@ public class CrashFinderImplSearchStackTrace{
                 	//return file.getAbsolutePath();
                 	String absPathFile = file.getAbsolutePath();
                 	listPathToStackTrace.add(absPathFile);
+                	return listPathToStackTrace;
                 //}
                 /**
                 else
