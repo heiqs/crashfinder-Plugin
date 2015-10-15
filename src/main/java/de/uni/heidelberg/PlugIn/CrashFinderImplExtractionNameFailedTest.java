@@ -62,6 +62,7 @@ public class CrashFinderImplExtractionNameFailedTest {
 				if(strFound.contains(fullNameTest))
 			    {
 					listFailedTest.add(fullNameTest);
+					return listFailedTest;
 			    }
 				
 			}
