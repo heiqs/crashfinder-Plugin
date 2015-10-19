@@ -151,7 +151,7 @@ public class JenkinsCrashFinderRunnerPassing implements CrashFinderRunner{
             
         } catch (IOException ex) 
         {
-//            Logger.getLogger(JenkinsCrashFinderRunnerPassing.class.getName()).log(Level.SEVERE, null, ex);
+            //Logger.getLogger(JenkinsCrashFinderRunnerPassing.class.getName()).log(Level.SEVERE, null, ex);
             throw new RuntimeException(ex.getMessage(), ex);
         }
         

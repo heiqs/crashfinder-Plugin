@@ -23,15 +23,12 @@ public class JenkinsCrashFinderRunnerFailing implements CrashFinderRunner{
 	    
 	    private String seed = null;
 
-	private Statement seedStatement = null;
-	    
-	    //private Statement seedStatementFailing;
+	    private Statement seedStatement = null;
 	    
 	    public JenkinsCrashFinderRunnerFailing(JenkinsCrashFinderImplementation crashFinderImpl,BuildListener listener)
 	    {
 	        this.crashFinderImpl = crashFinderImpl;
 	        this.listener = listener;
-	        
 	    }
 	    
 	    public String getSeed()
@@ -132,9 +129,7 @@ public class JenkinsCrashFinderRunnerFailing implements CrashFinderRunner{
 	            //5.Instrument
 	            crashFinderImpl.instrument(pathToJar,pathToInstrJar, intersection);
 	            
-	            //get seed for failing
-//	            this.seed = crashFinderImpl.getSeed();
-	            
+	          
 	            
 	        } catch (IOException ex) 
 	        {

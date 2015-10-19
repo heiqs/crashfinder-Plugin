@@ -71,17 +71,13 @@ public final class CrashFinderPublisher extends Notifier {
         
         private final String passwordSvnCommand;
         
-        //private final String automateStackTrace; //automateStackTrace
-        
-        //private final String manuallyStackTrace;
-        
         private final String stackTrace; 
         
         private final String pathToStackTrace;
         
         private final String fullNameFailedTestClass; //fullNameFailedTestClass
         
-        //private final String pathToStackTrace;
+        
         
        
 
@@ -90,6 +86,7 @@ public final class CrashFinderPublisher extends Notifier {
 
     //Fields in config.jelly must match the parameter names in the
     // "DataBoundConstructor"
+
 
     /**
      *
@@ -213,12 +210,12 @@ public final class CrashFinderPublisher extends Notifier {
             return this.git;
         }
         
-        public String getSVN()
+        public String getSvn()
         {
             return this.svn;
         }
         
-        public String getGitNumberCommit()
+        public String getGitNumberCommitBack()
         {
             return this.gitNumberCommitBack;
         }
@@ -257,8 +254,12 @@ public final class CrashFinderPublisher extends Notifier {
         {
             return this.pathToSrcFileSystem;
         }
-        
-        /**
+
+        public String getSvnRevisionNumb() {
+            return svnRevisionNumb;
+        }
+
+    /**
         public String getAutomateStackTrace()
         {
         	return this.automateStackTrace;
@@ -305,10 +306,7 @@ public final class CrashFinderPublisher extends Notifier {
             }else
             {
              
-            	
-            	//listener.getLogger().println("Get project name: " + projectName);
-            	
-            	CrashFinderImplException crashFinderImplException = new CrashFinderImplException(
+            	CrashFinderImplCheckInputPlugIn crashFinderImplException = new CrashFinderImplCheckInputPlugIn(
                   		pathToLogPathDir,
               			pathToJarFailingVersion,
               	        pathToJarPassingVersion,
@@ -348,10 +346,6 @@ public final class CrashFinderPublisher extends Notifier {
                 String absPathToTestsJar = absolutizer.absolutize(this.pathToTestsJar);
 
             
-                //collect filename failing version in workspace
-                //HashMap<String,String> mapFilenamePathFailing = ExtractionFilenamePath.extractFilenamePath(pathToWorkspace);
-                //Set<String> setFilenameFailing = mapFilenamePathFailing.keySet();
-
                 File logPathFile = new File(absPathLogDir);
                 FileUtils.deleteDirectory(logPathFile);
                 logPathFile.mkdir();
@@ -362,7 +356,7 @@ public final class CrashFinderPublisher extends Notifier {
                 FilePath filePathPassingDir = new FilePath(filePassingDir); 
                 
                 //check out passing version
-                CrashFinderImplPassing getPassing = new CrashFinderImplPassing
+                CrashFinderImplGetPassing getPassing = new CrashFinderImplGetPassing
                 (
                 				behaviour,
                 				git, svn,
@@ -396,17 +390,17 @@ public final class CrashFinderPublisher extends Notifier {
                 	fileDiffJava.createNewFile();
                 }
                 
-                //Extract only diff java
+                //Only extract diff java
                 String strDiffOutput = DocumentReader.slurpFile(fileDiffOutput);
-                ExtractionDiffJavaFile.extractDiffJavaFile(strDiffOutput, fileDiffJava, regexStartCommandDiff);
+                ExtractionDiffJava.extractDiffJavaFile(strDiffOutput, fileDiffJava, regexStartCommandDiff);
                 
                 //delete tmp-diff
                 fileDiffOutput.delete();
                 //delete passing version, not needed anymore
                 FileUtils.deleteDirectory(new File(absPathPassingDir));
                 
-                CrashFinderImplStackTrace crashFinderImplStackTrace = 
-                		new CrashFinderImplStackTrace
+                CrashFinderImplGetStackTrace crashFinderImplStackTrace = 
+                		new CrashFinderImplGetStackTrace
                 		(
                 			this.stackTrace,
                 			this.pathToStackTrace,
@@ -423,13 +417,13 @@ public final class CrashFinderPublisher extends Notifier {
                 	listener.getLogger().println("Path to stack trace: " + listPathToStackTrace.get(i));
                 }
                 
+                
                 for (int j = 0 ; j < listFullnameFailedTest.size() ; j++)
                 {
                 	listener.getLogger().println("Full name failed test class: " + listFullnameFailedTest.get(j));
                 }
                 
-                /**
-
+                
                 //Create log directory
                 CrashFinderImplLog logger = new CrashFinderImplLog(absPathLogDir);
                 listener.getLogger().println("Log path: " + absPathLogDir);
@@ -545,7 +539,9 @@ public final class CrashFinderPublisher extends Notifier {
                 Collection<String> failingJars = new ArrayList<String>(commonJars);
                 failingJars.add(pathToInstrJarFailing);
 
-                String testClass = CrashFinderImplSearchStackTrace.extractTestClass(new File(pathToStackTrace));
+                //change
+                //String testClass = CrashFinderImplSearchStackTrace.extractTestClass(new File(pathToStackTrace));
+                String testClass = listFullnameFailedTest.get(0);
                 listener.getLogger().println("Test class: " + testClass);
                 String testCommandTemplate = "java -cp \"%s\" org.junit" +
                 ".runner.JUnitCore " + testClass;
@@ -596,7 +592,7 @@ public final class CrashFinderPublisher extends Notifier {
                     //FileUtils.deleteDirectory(new File(absPathFailingDir));
                     //throw new RuntimeException(e);
                 //}
-               **/ 
+               
                
             }
 

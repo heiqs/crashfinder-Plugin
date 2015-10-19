@@ -5,8 +5,19 @@ import java.util.*;
 
 import org.apache.commons.io.FileUtils;
 
+/**
+ * 
+ * @author Antsa Harinala Andriamboavonjy
+ *
+ */
+
 public class CopyHiddenFile {
 	
+	/**
+	 * Extract all hidden files containing in a given directory
+	 * @param parentDirectory - the directory where the search takes place
+	 * @return - list containing all hidden files
+	 */
 	public static ArrayList<String> extractHiddenFile(String parentDirectory) 
 	{
 		ArrayList<String> listPath = new ArrayList<String>();
@@ -25,6 +36,12 @@ public class CopyHiddenFile {
 		return listPath;
 	}
 	
+	/**
+	 * Copy all hidden files found in a source directory to a given directory
+	 * @param sourceDirectory - path to the source directory
+	 * @param destinationDirectory - path to the destination directory
+	 * @throws IOException
+	 */
 	public static void copyHiddenFile(String sourceDirectory, String destinationDirectory) throws IOException
 	{
 		File fileDestination = new File(destinationDirectory);

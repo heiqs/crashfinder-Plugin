@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package de.uni.heidelberg.CrashFinder;
 
 import com.ibm.wala.ipa.slicer.Slicer.ControlDependenceOptions;
@@ -45,7 +40,7 @@ import java.util.logging.Logger;
 
 /**
  *
- * @author antsaharinala
+ * @author Antsa Harinala
  */
 public class JenkinsCrashFinderImplementation implements CrashFinderImplementation{
 
@@ -74,7 +69,6 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
     private Launcher launcher;
     
     private String seed = "";
-    
     
     public JenkinsCrashFinderImplementation(String pathToDiffOut, String pathToLogDiff,
                                             String pathToStackTrace, String pathToJarFile,
@@ -150,8 +144,8 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
             File pyFile = new File("tmp.py");
             this.diffPassingPython = pyFile.getCanonicalPath();
             pyFile.createNewFile();
-//            FileUtils.write(new File(diffPassingPython), pyCode);
-            FileUtils.write(new File(diffPassingPython), dummyPyCode);
+            FileUtils.write(new File(diffPassingPython), pyCode);
+            //.write(new File(diffPassingPython), dummyPyCode);
         } catch (IOException e) {
             RuntimeException re = new RuntimeException(e);
             re.setStackTrace(e.getStackTrace());

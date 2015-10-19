@@ -24,10 +24,10 @@
 
 package de.uni.heidelberg.Utils;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import org.apache.commons.io.FileUtils;
+
+import java.io.*;
+import java.nio.Buffer;
 import java.util.ArrayList;
 
 /**
@@ -44,17 +44,16 @@ public class DocumentReader {
 	 */
     public static String slurpFile(File file)throws IOException
     {
-		//buffer
-    	StringBuilder buffer  = new StringBuilder();
-    	//read
-    	BufferedReader br = new BufferedReader(new FileReader(file));
-    	while(br.ready())
-        {
-            String line = br.readLine();
-            buffer.append(line);
-            buffer.append("\n");
+		return FileUtils.readFileToString(file);
+    }
+
+    public static String slurpStream(InputStream is) throws IOException {
+        StringBuilder b = new StringBuilder();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+        for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+            b.append(line);
         }
-		return buffer.toString();
+        return b.toString();
     }
     
     /**
@@ -66,7 +65,6 @@ public class DocumentReader {
     public static ArrayList<String> slurpFiles(File file)throws IOException
     {
         ArrayList<String> listLines = new ArrayList<String>();
-        
         BufferedReader br = new BufferedReader(new FileReader(file));
         while(br.ready())
         {

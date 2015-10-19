@@ -25,19 +25,18 @@
  <f:entry title="Stack trace">
  	<f:nested>
  		<table>
- 			<f:radioBlock title="Get stack trace automatically" name="stackTrace"  value="automatically" inline="true"/>
- 			<f:radioBlock title="Get stack trace manually" name="stackTrace"  value="manually" inline="true">
- 				 <f:nested>
+ 			<f:radioBlock title="Get stack trace automatically" name="stackTrace"  value="automatically" checked="${instance.stackTrace == 'automatically'}" inline="true"/>
+ 			<f:radioBlock title="Get stack trace manually" name="stackTrace"  value="manually" checked="${instance.stackTrace == 'manually'}" inline="true">
+ 				 <f:nested> 
                     <table style="margin-left: 65px; width: 800px;">
                         <f:entry title="Path to stack trace" field="pathToStackTrace">
-                            <f:textbox/>
+                            <f:textbox optional="false"/>
                         </f:entry>
                         <f:entry title="Full name failed test class" field="fullNameFailedTestClass">
-                            <f:textbox/>
+                            <f:textbox optional="false"/>
                         </f:entry>
-                        
                     </table>
-                </f:nested>
+                 </f:nested>
  			</f:radioBlock>
  		</table>
     </f:nested> 
@@ -48,24 +47,26 @@
  <f:entry title="Getting older version">
     <f:nested>
         <table>
-            <f:radioBlock title="SCM" name="behaviour"  value="Number" inline="true">
+            <f:radioBlock title="SCM" name="behaviour"  value="Number" checked="${instance.behaviour == 'Number'}" inline="true">
                 <f:nested>
                     <table style="margin-left: 65px; width: 800px;">
-                        <f:optionalBlock title="Git" name="git" value="git" inline="true">
-                            <f:entry title="Going back x commit before">
-                                <f:textbox name="gitNumberCommitBack"/>
+                        <f:optionalBlock title="Git" name="git" value="git"  checked="${instance.git}" inline="true">
+                            <f:entry title="Going back x commit"
+                                     field="gitNumberCommitBack">
+                                <f:textbox optional="false"
+                                           value="${it.gitNumberCommitBack}"/>
                             </f:entry>                                                                
                         </f:optionalBlock>                               
                        
-                        <f:optionalBlock title="Subversion" name="svn"  value="svn" inline="true">
+                        <f:optionalBlock title="Subversion" name="svn"  value="svn" checked="${instance.svn}" inline="true">
                             <f:entry title="Username" field="usernameSvn">
-                                <f:textbox/>
+                                <f:textbox optional="false"/>
                             </f:entry>
                             <f:entry title="Password" field="passwordSvn"> 
-                                <f:password/>
+                                <f:password optional="false"/>
                             </f:entry>
                             <f:entry title="Going back to revision number x: " field="svnRevisionNumb">
-                                <f:textbox/>
+                                <f:textbox optional="false"/>
                             </f:entry>
                         </f:optionalBlock>                                             
                         
@@ -73,28 +74,28 @@
                 </f:nested>
             </f:radioBlock>
         
-            <f:radioBlock title="Going back to older version with command line" name="behaviour" value="CommandLine"  inline="true">
+            <f:radioBlock title="Going back to older version with command line" name="behaviour" value="CommandLine" checked="${instance.behaviour == 'CommandLine'}" inline="true">
                 <f:nested>
                     <table style="margin-left: 65px; width: 800px;">
                         <f:entry title="Command" field="commandCheckOutPassing">
-                            <f:textbox/>
+                            <f:textbox optional="false"/>
                         </f:entry>
                         <f:entry title="Username" field="usernameSvnCommand">
-                            <f:textbox/>
+                            <f:textbox optional="false"/>
                         </f:entry>
                         <f:entry title="Password" field="passwordSvnCommand">
-                            <f:password/>
+                            <f:password optional="false"/>
                         </f:entry>
                     </table>
                 </f:nested>
             </f:radioBlock>
   
   
-            <f:radioBlock title="Getting older version from file system" name="behaviour" value="Filesystem" inline="true">
+            <f:radioBlock title="Getting older version from file system" name="behaviour" value="Filesystem" checked="${instance.behaviour == 'Filesystem'}" inline="true">
                 <f:nested>  
                     <table style="margin-left: 65px; width: 800px;">
                         <f:entry title="Path to src" field="pathToSrcFileSystem">
-                            <f:textbox default="./" />
+                            <f:textbox optional="false"/>
                         </f:entry>                                                    
                     </table>
                 </f:nested>                
@@ -114,4 +115,3 @@
 
   
   </j:jelly>
-  

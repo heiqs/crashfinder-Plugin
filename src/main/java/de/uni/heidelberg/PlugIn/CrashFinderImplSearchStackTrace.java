@@ -29,6 +29,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import hudson.model.BuildListener;
 import org.apache.commons.io.FilenameUtils;
 import com.google.common.io.Files;
 
@@ -43,7 +44,7 @@ import de.uni.heidelberg.Utils.DocumentReader;
 public class CrashFinderImplSearchStackTrace{
     
 	/**
-	 * This method extracts all files containing in a directory
+	 * This method extracts all files containing in a given directory
 	 * @param parentDirectory - path to parent directory
 	 * @param fileResult - list containing File in the parent directory
 	 *
@@ -51,11 +52,10 @@ public class CrashFinderImplSearchStackTrace{
     public static void listf(String parentDirectory, ArrayList<File> fileResult) 
     {
             File directory = new File(parentDirectory);
-
             File[] fList = directory.listFiles();
-            for (File file : fList) 
+            for(File file : fList) 
             {
-                if (file.isFile() == true && file.isHidden() == false ) 
+                if(file.isFile() == true && file.isHidden() == false ) 
                 {
                 	String extensionFile = Files.getFileExtension(file.getAbsolutePath());
                 	if( extensionFile.trim().equals("java")== false 
@@ -76,15 +76,14 @@ public class CrashFinderImplSearchStackTrace{
     }
 	
 	/**
-	 * This method checks whether a file type contains stack trace
-	 * @param file
+	 * Checks whether file contains stack trace.
+	 * @param file 
 	 * @return
 	 * @throws IOException
 	 */
     public static boolean isFileStackTrace(File file) throws IOException
     {
-		
-        boolean isStackTrace = false;
+		boolean isStackTrace = false;
         String fileContent = DocumentReader.slurpFile(file);
 		boolean isHTMLXML = DetectionXMLHTML.isHtml(fileContent);
 		if(isHTMLXML == false)
@@ -98,53 +97,7 @@ public class CrashFinderImplSearchStackTrace{
 	        }
 		 }
 		
-		
-		/**
-		if(isHTMLXML)
-		{
-			
-			String startTag =  "\\<\\w+((\\s+\\w+(\\s*\\=\\s*(?:\".*?\"|'.*?'|[^'\"\\>\\s]+))?)+\\s*|\\s*)\\>";
-			String endTag = "\\</\\w+\\>";
-			
-			String regex = startTag + "([^<]*)" + endTag; // + endTag ;
-			Pattern pattern = Pattern.compile(regex);
-			Matcher matcher = pattern.matcher(fileContent);
-			while(matcher.find())
-			{
-				String error = matcher.group();
-				String newRegex = "([a-zA-Z]+)Exception:(\\s*([^<]*))+";
-				Pattern newPattern = Pattern.compile(newRegex);
-				Matcher newMatcher = newPattern.matcher(error);
-				if(newMatcher.find())
-				{
-					String tagsError = newMatcher.group();
-                    isStackTrace = true;
-                }
-			}
-		
-		//case txt file
-		}else
-		{
-			 
-             String regexAlt = "(Caused by:\\s?(.*)Exception:(\\s+at(.*)|\\s+at)+)?";
-             String regexText = "([a-zA-Z\\p{Punct}]+)Exception(:.*)?(\\n\\t?at.*)";
-             //String regexText = "([a-zA-Z]+)Exception:\\s+(.*)(\\s+(.*)|\\s+at)+" ; //+ regexAlt;
-             //String regexText = "([a-zA-Z]+)Exception: //+(.*)\\s+at(.*)";
-             //String regexText = "Exception:(.*)at";//(.*)\\n(\\s*at(.*))+" ; //+ regexAlt;
-             //String regexText = "[a-zA-Z]+"+ "Exception:";// + "[[a-zA-Z0-9]|\\s|\\p{Punct}]+" + "at" ; //+ "[[a-zA-Z0-9]|\\s|\\p{Punct}]+";
-             Pattern pattern = Pattern.compile(regexText);
-             Matcher matcher = pattern.matcher(fileContent);
-             while(matcher.find())
-             {
-            	 String content = matcher.group();
-            	 System.out.println("Content: " + content);
-                 isStackTrace = true;
-                 
-             }//end while
-			
-		}
-		**/
-        return isStackTrace;
+		return isStackTrace;
 		
 	}
 
@@ -187,7 +140,7 @@ public class CrashFinderImplSearchStackTrace{
       **/
     
     /**
-     * This method extracts string errors containing in non-html/xml files. 
+     * Search for stack trace file. 
      * @param parentDirectory - path to the parent directory
      * @param listener
      * @return
@@ -196,52 +149,104 @@ public class CrashFinderImplSearchStackTrace{
 	public static ArrayList<String> searchFileStackTrace(String parentDirectory) throws IOException
 	{
 		ArrayList<String> listPathToStackTrace = new ArrayList<String>();
-		
-		ArrayList<File> listFiles = new ArrayList<File>();
+                ArrayList<File> listFiles = new ArrayList<File>();
 		CrashFinderImplSearchStackTrace.listf(parentDirectory, listFiles);
-        File file = null;
-        //String strStackTrace = "";
+                File file = null;
+                //String strStackTrace = "";
 		for (int i  = 0 ; i < listFiles.size() ; i++)
 		{
 			File f  = listFiles.get(i);
-			//System.out.println(f.getName());
 			boolean value = isFileStackTrace(f);
 			if(value == true)
 			{
 				file = f;
-				//String content = DocumentReader.slurpFile(file);
-                //if(DetectionXMLHTML.isHtml(content) == false)
-                //{
-                	//return DocumentReader.slurpFile(file);
-                	//return file.getAbsolutePath();
-                	String absPathFile = file.getAbsolutePath();
-                	listPathToStackTrace.add(absPathFile);
-                	return listPathToStackTrace;
-                //}
-                /**
-                else
-                {
-                	String error = CrashFinderImpSearchStackTrace.extractErrorMessageHTMLXML(file, listener);
-                    return error;
-                }**/
-                               
-			}
-		}
+				String absPathFile = file.getAbsolutePath();
+                                listPathToStackTrace.add(absPathFile);
+                                return listPathToStackTrace;
+                        }//end if
+			
+		}//end for
 		
 		return listPathToStackTrace;
-	}
+                
+	}//end method
 	
-	
+	/**
 	public static String extractTestClass(File stackTraceFile) throws
-		IOException {
+		IOException
+	{
 			BufferedReader reader = new BufferedReader(new FileReader(stackTraceFile));
 		    reader.readLine();
 		    String secondLine = reader.readLine();
 		    return secondLine.replace("Test set:", "").trim();
+	}*/
+	
+	
+	/**
+	 * Retrieve parent directory where stack trace file is stored.
+	 * @param pathToLog - path to log of the last failed build
+	 * @return path to the parent directory containing the stack trace
+	 * @throws IOException
+	 */
+	public static String searchPathToDirectoryStackTrace(String pathToLog) throws IOException
+	{
+		String pathToStackTraceDir = "";
+		File fileLog = new File(pathToLog);
+		String strLog = DocumentReader.slurpFile(fileLog);
+		
+		String regex = "\\[INFO\\]\\s+Surefire report directory:" + "(.*)";
+		Pattern pattern = Pattern.compile(regex);
+		Matcher matcher = pattern.matcher(strLog);
+		while(matcher.find())
+		{
+			pathToStackTraceDir = matcher.group(1).trim();
+		}
+		if (pathToStackTraceDir.equals("")) {
+			throw new RuntimeException("Regex not matched.");
+		}
+		return pathToStackTraceDir;
 	}
-	
-	
-	
+
+	public static String searchPathToDirectoryStackTrace(InputStream
+																 logInputStream, BuildListener listener) throws IOException {
+		String pathToStackTraceDir = "";
+		BufferedReader reader = new BufferedReader(new InputStreamReader(
+				logInputStream));
+		for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+			System.out.println("Line: " + line);
+			String regex = "\\[INFO\\]\\s+Surefire report directory:" + "(.*)";
+			System.out.println("Regex: " + regex);
+			Pattern pattern = Pattern.compile(regex);
+			Matcher matcher = pattern.matcher(line);
+			if(matcher.find()) {
+				listener.getLogger().println("Regex found");
+				pathToStackTraceDir = matcher.group(1).trim();
+				break;
+			}
+		}
+		if (pathToStackTraceDir.equals("")) {
+			throw new RuntimeException("Regex not matched.");
+		}
+		return pathToStackTraceDir;
+	}
+
+	public static String searchStackTraceContent(String contentLog) {
+		String pathToStackTraceDir = null;
+                System.out.println("Content log: " + contentLog);
+		String regex = "\\[INFO\\]\\s+Surefire report directory:" + "(.*)";
+		Pattern pattern = Pattern.compile(regex);
+		Matcher matcher = pattern.matcher(contentLog);
+		while(matcher.find())
+		{
+			pathToStackTraceDir = matcher.group(1).trim();
+		}
+		if (pathToStackTraceDir == null) {
+			throw new RuntimeException("Regex not matched.");
+		}
+		return pathToStackTraceDir;
+	}
+
+
 	/**
 	public static void main(String[] args) throws IOException
 	{

@@ -34,7 +34,7 @@ import org.apache.commons.io.FileUtils;
 
 /**
  *
- * @author antsaharinala
+ * @author Antsa Harinala Andriamboavonjy
  */
 public class RemoveFileDirectory {
     
