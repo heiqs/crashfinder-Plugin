@@ -478,11 +478,11 @@ public final class CrashFinderPublisher extends Notifier {
                listener.getLogger().println("Runnig buglocator on failing version");
                JenkinsCrashFinderImplementation JenkCrashFinderFailing = new
                        JenkinsCrashFinderImplementation(pathToDiffJava,
-                    		   							pathToLogDiffPassing, 
+                    		   							pathToLogDiffFailing, 
                     		   							pathToStackTrace,
-                    		   							absPathJarPassing,
-                    		   							pathToInstrJarPassing,
-                    		   							pathToLogSlicingPassing,
+                    		   							absPathJarFailing,
+                    		   							pathToInstrJarFailing,
+                    		   							pathToLogSlicingFailing,
                     		   							pathToWorkspace, 
                     		   							listener,
                     		   							build, 
@@ -499,11 +499,11 @@ public final class CrashFinderPublisher extends Notifier {
                //run buglocator on passing version
                listener.getLogger().println("Running buglocator on passing version");
                JenkinsCrashFinderImplementation JenkinsCrashFinderPassing = new JenkinsCrashFinderImplementation(pathToDiffJava,
-            		   																							 pathToLogDiffFailing, 
+            		   																							 pathToLogDiffPassing, 
             		   																							 pathToStackTrace,
-            		   																							 absPathJarFailing,
-            		   																							 pathToInstrJarFailing,
-            		   																							 pathToLogSlicingFailing,
+            		   																							 absPathJarPassing,
+            		   																							 pathToInstrJarPassing,
+            		   																							 pathToLogSlicingPassing,
             		   																							 pathToWorkspace,
             		   																							 listener,
             		   																							 build,
