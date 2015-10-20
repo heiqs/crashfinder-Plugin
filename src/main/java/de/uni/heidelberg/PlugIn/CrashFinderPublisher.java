@@ -45,7 +45,7 @@ public final class CrashFinderPublisher extends Notifier {
         
         private final String pathToTestsJar;
         
-        private final String pathToCrashFinderJar;
+        private final String dependencyPaths;
         
         //private final String SCM;
          
@@ -104,7 +104,7 @@ public final class CrashFinderPublisher extends Notifier {
                     String pathToJarPassingVersion,
                     String pathToLogPathDir,
                     String pathToTestsJar,
-                    String pathToCrashFinderJar,
+                    String dependencyPaths,
                     String behaviour,
                     String git,
                     String svn,
@@ -130,7 +130,7 @@ public final class CrashFinderPublisher extends Notifier {
 
                 this.pathToTestsJar = pathToTestsJar;
                 
-                this.pathToCrashFinderJar = pathToCrashFinderJar;
+                this.dependencyPaths = dependencyPaths;
                 
                 this.svn = svn;
                 
@@ -176,9 +176,9 @@ public final class CrashFinderPublisher extends Notifier {
             return this.pathToTestsJar;
         }
         
-        public String getPathToCrashFinderJar()
+        public String getDependencyPaths()
         {
-            return this.pathToCrashFinderJar;
+            return this.dependencyPaths;
         }
         
         public String getPathToLogPathDir()
@@ -311,7 +311,7 @@ public final class CrashFinderPublisher extends Notifier {
               			pathToJarFailingVersion,
               	        pathToJarPassingVersion,
               	        this.pathToTestsJar,
-              	        this.pathToCrashFinderJar,
+              	        this.dependencyPaths,
               	        behaviour,
               	        git,
               	        svn,
@@ -342,8 +342,18 @@ public final class CrashFinderPublisher extends Notifier {
                 String absPathJarPassing = absolutizer.absolutize(this.pathToJarPassingVersion);
                 String absPathJarFailing = absolutizer.absolutize(this.pathToJarFailingVersion);
                 String absPathSrcFileSystem = absolutizer.absolutize(this.pathToSrcFileSystem);
-                String absPathToCrashFinderJar = absolutizer.absolutize(this.pathToCrashFinderJar);
                 String absPathToTestsJar = absolutizer.absolutize(this.pathToTestsJar);
+                Collection<String> absPathsToDependencies = new HashSet<String>();
+                Filewalker jarWalker = new Filewalker(".jar");
+                for (String path : dependencyPaths.split(":")) {
+                    String absPath = absolutizer.absolutize(path);
+                    File absPathFile = new File(absPath);
+                    if (absPathFile.isFile()) {
+                        absPathsToDependencies.add(absPath);
+                    } else {
+                        absPathsToDependencies.addAll(jarWalker.walk(absPath));
+                    }
+                }
 
             
                 File logPathFile = new File(absPathLogDir);
@@ -528,12 +538,12 @@ public final class CrashFinderPublisher extends Notifier {
                 FileUtils.copyURLToFile(new URL(junitUrl), junitJarFile);
                 FileUtils.copyURLToFile(new URL(hamcrestUrl), hamcrestJarFile);
 
-                Collection<String> commonJars = Arrays.asList(
-                		absPathToCrashFinderJar,
+                Collection<String> commonJars = new ArrayList<String>(Arrays.asList(
                 		absPathToTestsJar,
                 		junitJarFile.getCanonicalPath(),
                 		hamcrestJarFile.getCanonicalPath()
-                		);
+                ));
+                commonJars.addAll(absPathsToDependencies);
                 Collection<String> passingJars = new ArrayList<String>(commonJars);
                 passingJars.add(pathToInstrJarPassing);
                 Collection<String> failingJars = new ArrayList<String>(commonJars);

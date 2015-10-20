@@ -1,8 +1,5 @@
 package de.uni.heidelberg.PlugIn;
 
-import java.io.*;
-import java.util.*;
-
 import hudson.model.BuildListener;
 
 /**
@@ -25,7 +22,7 @@ public class CrashFinderImplCheckInputPlugIn {
     private final String pathToJarTest;
     
     //variable containing the command used to run test on the failing jar corresponding to the failing version.
-    private final String pathToCrashFinderJar;
+    private final String dependencyPaths;
     
     //private final String SCM;
     //the content of this variable indicates the options used to get the passing version of the project.
@@ -70,7 +67,7 @@ public class CrashFinderImplCheckInputPlugIn {
 			String pathToJarFailingVersion,
 	        String pathToJarPassingVersion,
 	        String pathToJarTest,
-	        String pathToCrashFinderJar,
+	        String dependencyPaths,
 	        String behaviour,
 	        String git,
 	        String svn,
@@ -89,7 +86,7 @@ public class CrashFinderImplCheckInputPlugIn {
 		this.pathToJarPassingVersion = pathToJarPassingVersion;
 		this.pathToLogPathDir = pathToLogPathDir;
 		this.pathToJarTest = pathToJarTest;
-		this.pathToCrashFinderJar = pathToCrashFinderJar;
+		this.dependencyPaths = dependencyPaths;
 		this.git = git;
 		this.svn = svn;
 		this.commandCheckOutPassing = commandCheckOutPassing;
@@ -207,9 +204,9 @@ public class CrashFinderImplCheckInputPlugIn {
 	
 	
 	
-	public boolean existPathToCrashFinderJar()
+	public boolean existDependencyPaths()
 	{
-		if(this.pathToCrashFinderJar.equals("") == true)
+		if(this.dependencyPaths.equals("") == true)
 		{
 			return false;
 		}
@@ -246,7 +243,7 @@ public class CrashFinderImplCheckInputPlugIn {
 			return true;
 		}
 		
-		else if(this.existPathToCrashFinderJar() == false)
+		else if(this.existDependencyPaths() == false)
 		{
 			listener.getLogger().println("Path to crash finder jar is missing");
 			return true;

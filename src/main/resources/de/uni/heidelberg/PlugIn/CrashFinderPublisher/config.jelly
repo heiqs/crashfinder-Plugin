@@ -108,8 +108,8 @@
      <f:textbox/>
  </f:entry>
 
-<f:entry title="Path to crashFinder jar" field="pathToCrashFinderJar">
-    <f:textbox/>
+<f:entry title="Dependencies" field="dependencyPaths">
+    <f:textbox default="."/>
 </f:entry>
                                                                                                                                                                                                           
 
