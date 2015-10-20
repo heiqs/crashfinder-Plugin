@@ -345,6 +345,7 @@ public final class CrashFinderPublisher extends Notifier {
                 String absPathToTestsJar = absolutizer.absolutize(this.pathToTestsJar);
                 Collection<String> absPathsToDependencies = new HashSet<String>();
                 Filewalker jarWalker = new Filewalker(".jar");
+                long t0 = System.currentTimeMillis();
                 for (String path : dependencyPaths.split(":")) {
                     String absPath = absolutizer.absolutize(path);
                     File absPathFile = new File(absPath);
@@ -354,6 +355,9 @@ public final class CrashFinderPublisher extends Notifier {
                         absPathsToDependencies.addAll(jarWalker.walk(absPath));
                     }
                 }
+                long delta_t = System.currentTimeMillis() - t0;
+                listener.getLogger().println("Search for jar files took " +
+                        delta_t + "ms.");
 
             
                 File logPathFile = new File(absPathLogDir);
