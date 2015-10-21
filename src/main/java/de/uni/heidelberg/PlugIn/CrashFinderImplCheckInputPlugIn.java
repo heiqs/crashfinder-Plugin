@@ -19,10 +19,12 @@ public class CrashFinderImplCheckInputPlugIn {
     private final String pathToJarPassingVersion;
     
     //variable containing the command used to run test on the instrumented jar corresponding to the passing version.
-    private final String pathToJarTest;
+    //private final String pathToJarTest;
     
-    //variable containing the command used to run test on the failing jar corresponding to the failing version.
-    private final String dependencyPaths;
+   
+    private final String dependencyPathsPassing;
+    
+    private final String dependencyPathsFailing;
     
     //private final String SCM;
     //the content of this variable indicates the options used to get the passing version of the project.
@@ -66,8 +68,9 @@ public class CrashFinderImplCheckInputPlugIn {
 			String pathToLogPathDir,
 			String pathToJarFailingVersion,
 	        String pathToJarPassingVersion,
-	        String pathToJarTest,
-	        String dependencyPaths,
+	        //String pathToJarTest,
+	        String dependencyPathsFailing,
+	        String dependencyPathsPassing,
 	        String behaviour,
 	        String git,
 	        String svn,
@@ -85,8 +88,9 @@ public class CrashFinderImplCheckInputPlugIn {
 		this.pathToJarFailingVersion = pathToJarFailingVersion;
 		this.pathToJarPassingVersion = pathToJarPassingVersion;
 		this.pathToLogPathDir = pathToLogPathDir;
-		this.pathToJarTest = pathToJarTest;
-		this.dependencyPaths = dependencyPaths;
+		//this.pathToJarTest = pathToJarTest;
+		this.dependencyPathsFailing = dependencyPathsFailing;
+		this.dependencyPathsPassing = dependencyPathsPassing;
 		this.git = git;
 		this.svn = svn;
 		this.commandCheckOutPassing = commandCheckOutPassing;
@@ -204,23 +208,32 @@ public class CrashFinderImplCheckInputPlugIn {
 	
 	
 	
-	public boolean existDependencyPaths()
+	public boolean existDependencyPathsFailing()
 	{
-		if(this.dependencyPaths.equals("") == true)
+		if(this.dependencyPathsFailing.equals("") == true)
 		{
 			return false;
 		}
 		return true;
 	}
 	
-	public boolean existPathToTestJar()
+	public boolean existDependencyPathsPassing()
 	{
-		if(this.pathToJarTest.equals("") == true)
+		if(this.dependencyPathsPassing.equals("") == true)
 		{
 			return false;
 		}
 		return true;
 	}
+	
+	//public boolean existPathToTestJar()
+	//{
+	//if(this.pathToJarTest.equals("") == true)
+	//	{
+	//		return false;
+	//	}
+	//	return true;
+	//}
 	
 
 	public boolean isMissingInformation()
@@ -243,13 +256,18 @@ public class CrashFinderImplCheckInputPlugIn {
 			return true;
 		}
 		
-		else if(this.existDependencyPaths() == false)
+		else if(this.existDependencyPathsPassing() == false)
 		{
-			listener.getLogger().println("Path to crash finder jar is missing");
+			listener.getLogger().println("Path to dependencies for passing version is missing");
 			return true;
-		}else if(this.existPathToTestJar() == false)
+		//}
+		//else if(this.existPathToTestJar() == false)
+		//{
+		//	listener.getLogger().println("Path to test jar is missing ");
+		//	return true;
+		}else if(this.existDependencyPathsFailing() == false)
 		{
-			listener.getLogger().println("Path to test jar is missing ");
+			listener.getLogger().println("Path to dependencies for failing version is missing");
 			return true;
 		}
 		

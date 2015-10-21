@@ -43,9 +43,11 @@ public final class CrashFinderPublisher extends Notifier {
         
         private final String pathToJarPassingVersion;
         
-        private final String pathToTestsJar;
+        //private final String pathToTestsJar;
         
-        private final String dependencyPaths;
+        private final String dependencyPathsPassing;
+        
+        private final String dependencyPathsFailing;
         
         //private final String SCM;
          
@@ -103,8 +105,9 @@ public final class CrashFinderPublisher extends Notifier {
                     String pathToJarFailingVersion,
                     String pathToJarPassingVersion,
                     String pathToLogPathDir,
-                    String pathToTestsJar,
-                    String dependencyPaths,
+                    //String pathToTestsJar,
+                    String dependencyPathsPassing,
+                    String dependencyPathsFailing,
                     String behaviour,
                     String git,
                     String svn,
@@ -128,9 +131,11 @@ public final class CrashFinderPublisher extends Notifier {
                 
                 this.pathToLogPathDir = pathToLogPathDir;
 
-                this.pathToTestsJar = pathToTestsJar;
+                //this.pathToTestsJar = pathToTestsJar;
                 
-                this.dependencyPaths = dependencyPaths;
+                this.dependencyPathsPassing = dependencyPathsPassing;
+                
+                this.dependencyPathsFailing = dependencyPathsFailing;
                 
                 this.svn = svn;
                 
@@ -171,14 +176,20 @@ public final class CrashFinderPublisher extends Notifier {
         * @return
         */
         
-        public String getPathToTestsJar()
+        //public String getPathToTestsJar()
+        //{
+        //    return this.pathToTestsJar;
+        //}
+        
+        public String getDependencyPathsPassing()
         {
-            return this.pathToTestsJar;
+            return this.dependencyPathsPassing;
         }
         
-        public String getDependencyPaths()
+        public String getDependencyPathsFailing()
         {
-            return this.dependencyPaths;
+        	return this.dependencyPathsFailing;
+        			
         }
         
         public String getPathToLogPathDir()
@@ -191,7 +202,8 @@ public final class CrashFinderPublisher extends Notifier {
         	return pathToJarFailingVersion;
         }
 
-        public String getPathToJarPassingVersion() {
+        public String getPathToJarPassingVersion() 
+        {
         	return pathToJarPassingVersion;
         }
         
@@ -310,8 +322,9 @@ public final class CrashFinderPublisher extends Notifier {
                   		pathToLogPathDir,
               			pathToJarFailingVersion,
               	        pathToJarPassingVersion,
-              	        this.pathToTestsJar,
-              	        this.dependencyPaths,
+              	        //this.pathToTestsJar,
+              	        this.dependencyPathsFailing,
+              	        this.dependencyPathsPassing,
               	        behaviour,
               	        git,
               	        svn,
@@ -342,23 +355,34 @@ public final class CrashFinderPublisher extends Notifier {
                 String absPathJarPassing = absolutizer.absolutize(this.pathToJarPassingVersion);
                 String absPathJarFailing = absolutizer.absolutize(this.pathToJarFailingVersion);
                 String absPathSrcFileSystem = absolutizer.absolutize(this.pathToSrcFileSystem);
-                String absPathToTestsJar = absolutizer.absolutize(this.pathToTestsJar);
-                Collection<String> absPathsToDependencies = new HashSet<String>();
-                Filewalker jarWalker = new Filewalker(".jar");
-                long t0 = System.currentTimeMillis();
-                for (String path : dependencyPaths.split(":")) {
+                //String absPathToTestsJar = absolutizer.absolutize(this.pathToTestsJar);
+                Collection<String> absPathsToDependenciesFailing = new HashSet<String>();
+                Collection<String> absPathsToDependenciesPassing = new HashSet<String>();
+                
+                Filewalker jarWalkerFailing = new Filewalker(".jar");
+                //long t0 = System.currentTimeMillis();
+                for (String path : dependencyPathsFailing.split(":")) {
                     String absPath = absolutizer.absolutize(path);
                     File absPathFile = new File(absPath);
                     if (absPathFile.isFile()) {
-                        absPathsToDependencies.add(absPath);
+                        absPathsToDependenciesFailing.add(absPath);
                     } else {
-                        absPathsToDependencies.addAll(jarWalker.walk(absPath));
+                        absPathsToDependenciesFailing.addAll(jarWalkerFailing.walk(absPath));
                     }
                 }
-                long delta_t = System.currentTimeMillis() - t0;
-                listener.getLogger().println("Search for jar files took " +
-                        delta_t + "ms.");
-
+                
+                
+                Filewalker jarWalkerPassing = new Filewalker(".jar");
+                for (String path : dependencyPathsPassing.split(":")) {
+                    String absPath = absolutizer.absolutize(path);
+                    File absPathFile = new File(absPath);
+                    if (absPathFile.isFile()) {
+                        absPathsToDependenciesPassing.add(absPath);
+                    } else {
+                        absPathsToDependenciesPassing.addAll(jarWalkerPassing.walk(absPath));
+                    }
+                }
+                
             
                 File logPathFile = new File(absPathLogDir);
                 FileUtils.deleteDirectory(logPathFile);
@@ -542,15 +566,22 @@ public final class CrashFinderPublisher extends Notifier {
                 FileUtils.copyURLToFile(new URL(junitUrl), junitJarFile);
                 FileUtils.copyURLToFile(new URL(hamcrestUrl), hamcrestJarFile);
 
-                Collection<String> commonJars = new ArrayList<String>(Arrays.asList(
-                		absPathToTestsJar,
+                Collection<String> commonJarsPassing = new ArrayList<String>(Arrays.asList(
+                		//absPathToTestsJar,
                 		junitJarFile.getCanonicalPath(),
                 		hamcrestJarFile.getCanonicalPath()
                 ));
-                commonJars.addAll(absPathsToDependencies);
-                Collection<String> passingJars = new ArrayList<String>(commonJars);
+                
+                Collection<String> commonJarsFailing = new ArrayList<String>(Arrays.asList(
+                		//absPathToTestsJar,
+                		junitJarFile.getCanonicalPath(),
+                		hamcrestJarFile.getCanonicalPath()
+                ));
+                commonJarsPassing.addAll(absPathsToDependenciesPassing);
+                commonJarsFailing.addAll(absPathsToDependenciesFailing);
+                Collection<String> passingJars = new ArrayList<String>(commonJarsPassing);
                 passingJars.add(pathToInstrJarPassing);
-                Collection<String> failingJars = new ArrayList<String>(commonJars);
+                Collection<String> failingJars = new ArrayList<String>(commonJarsFailing);
                 failingJars.add(pathToInstrJarFailing);
 
                 //change

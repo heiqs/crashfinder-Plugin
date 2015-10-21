@@ -104,11 +104,11 @@
     </f:nested>        
    </f:entry>
   
-  <f:entry title="Path to tests jar" field="pathToTestsJar">
+  <f:entry title="Dependencies passing version" field="dependencyPathsPassing">
      <f:textbox/>
  </f:entry>
 
-<f:entry title="Dependencies" field="dependencyPaths">
+<f:entry title="Dependencies failing version" field="dependencyPathsFailing">
     <f:textbox default="."/>
 </f:entry>
                                                                                                                                                                                                           
