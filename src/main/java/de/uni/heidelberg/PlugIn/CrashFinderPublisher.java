@@ -579,10 +579,12 @@ public final class CrashFinderPublisher extends Notifier {
                 ));
                 commonJarsPassing.addAll(absPathsToDependenciesPassing);
                 commonJarsFailing.addAll(absPathsToDependenciesFailing);
-                Collection<String> passingJars = new ArrayList<String>(commonJarsPassing);
+                Collection<String> passingJars = new ArrayList<String>();
                 passingJars.add(pathToInstrJarPassing);
-                Collection<String> failingJars = new ArrayList<String>(commonJarsFailing);
+                passingJars.addAll(commonJarsPassing);
+                Collection<String> failingJars = new ArrayList<String>();
                 failingJars.add(pathToInstrJarFailing);
+                failingJars.addAll(commonJarsFailing);
 
                 //change
                 //String testClass = CrashFinderImplSearchStackTrace.extractTestClass(new File(pathToStackTrace));
