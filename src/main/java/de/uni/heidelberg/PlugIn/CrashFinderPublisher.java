@@ -586,33 +586,46 @@ public final class CrashFinderPublisher extends Notifier {
                 failingJars.add(pathToInstrJarFailing);
                 failingJars.addAll(commonJarsFailing);
 
+                String absPathToJunitOutputDir = logger.createSubdirectory
+                        ("junit-outputs");
+                String absPathToJunitOutputPassing = new File
+                        (absPathToJunitOutputDir, "junit-passing.txt")
+                        .getCanonicalPath();
+                String absPathToJunitOutputFailing = new File
+                        (absPathToJunitOutputDir, "junit-failing.txt")
+                        .getCanonicalPath();
+
                 //change
                 //String testClass = CrashFinderImplSearchStackTrace.extractTestClass(new File(pathToStackTrace));
                 String testClass = listFullnameFailedTest.get(0);
                 listener.getLogger().println("Test class: " + testClass);
                 String testCommandTemplate = "java -cp \"%s\" org.junit" +
-                ".runner.JUnitCore " + testClass;
+                ".runner.JUnitCore " + testClass + " > %s";
                 
                 //execute test on passing version
                 listener.getLogger().println("Executing test on passing " +
                         "version");
                 String commandTestPassingVersion = String.format
                         (testCommandTemplate, Joiner.on(':').join
-                                (passingJars));
                 listener.getLogger().println("Command re-run test passing " +
                         "version: " + commandTestPassingVersion);
+                                (passingJars), absPathToJunitOutputPassing);
                 CommandInterpreter runnerTestInstrPassing = new Shell
                         (commandTestPassingVersion);
                 runnerTestInstrPassing.perform(build, launcher, listener);
+                listener.getLogger().println(FileUtils.readFileToString
+                        (new File(absPathToJunitOutputPassing)));
 
                 //execute test on failing version
                 listener.getLogger().println("Executing test on failing version");
                 String commandTestFailingVersion = String.format
                         (testCommandTemplate, Joiner.on(':').join
-                                (failingJars));
                 listener.getLogger().println("Command re-run test failing version: " + commandTestFailingVersion);
+                                (failingJars), absPathToJunitOutputFailing);
                 CommandInterpreter runnerTestInstrFailing = new Shell(commandTestFailingVersion);
                 runnerTestInstrFailing.perform(build, launcher, listener);
+                listener.getLogger().println(FileUtils.readFileToString
+                        (new File(absPathToJunitOutputFailing)));
 
                 String[] dumpFileNames = new File(pathToWorkspace).list
                         (new FilenameFilter() {
