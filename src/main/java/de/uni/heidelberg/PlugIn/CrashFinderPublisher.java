@@ -607,8 +607,6 @@ public final class CrashFinderPublisher extends Notifier {
                         "version");
                 String commandTestPassingVersion = String.format
                         (testCommandTemplate, Joiner.on(':').join
-                listener.getLogger().println("Command re-run test passing " +
-                        "version: " + commandTestPassingVersion);
                                 (passingJars), absPathToJunitOutputPassing);
                 CommandInterpreter runnerTestInstrPassing = new Shell
                         (commandTestPassingVersion);
@@ -620,7 +618,6 @@ public final class CrashFinderPublisher extends Notifier {
                 listener.getLogger().println("Executing test on failing version");
                 String commandTestFailingVersion = String.format
                         (testCommandTemplate, Joiner.on(':').join
-                listener.getLogger().println("Command re-run test failing version: " + commandTestFailingVersion);
                                 (failingJars), absPathToJunitOutputFailing);
                 CommandInterpreter runnerTestInstrFailing = new Shell(commandTestFailingVersion);
                 runnerTestInstrFailing.perform(build, launcher, listener);
