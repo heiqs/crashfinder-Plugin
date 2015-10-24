@@ -358,6 +358,7 @@ public final class CrashFinderPublisher extends Notifier {
                 //String absPathToTestsJar = absolutizer.absolutize(this.pathToTestsJar);
                 Collection<String> absPathsToDependenciesFailing = new HashSet<String>();
                 Collection<String> absPathsToDependenciesPassing = new HashSet<String>();
+                String absPathToStackTrace = absolutizer.absolutize(this.pathToStackTrace);
                 
                 Filewalker jarWalkerFailing = new Filewalker(".jar");
                 //long t0 = System.currentTimeMillis();
@@ -441,7 +442,7 @@ public final class CrashFinderPublisher extends Notifier {
                 		new CrashFinderImplGetStackTrace
                 		(
                 			this.stackTrace,
-                			this.pathToStackTrace,
+                			absPathToStackTrace,
                 			this.fullNameFailedTestClass,
 							build,
 							listener);
