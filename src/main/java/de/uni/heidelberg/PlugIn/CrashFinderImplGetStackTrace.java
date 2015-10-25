@@ -19,6 +19,7 @@ import javax.print.Doc;
 /**
  * 
  * @author Antsa Harinala Andriamboavonjy
+ * Created in October 2015
  *
  */
 
@@ -39,12 +40,10 @@ public class CrashFinderImplGetStackTrace {
 	private BuildListener listener;
 	
 	public CrashFinderImplGetStackTrace(String stackTrace,
-									 //String automateStackTrace, 
-									 //String manuallyStackTrace,
-									 String pathToStackTrace,
-									 String fullNameFailedTestClass,
-									 AbstractBuild build,
-									 BuildListener listener)
+				            String pathToStackTrace,
+					    String fullNameFailedTestClass,
+					    AbstractBuild build,
+					    BuildListener listener)
 	{
 		this.stackTrace = stackTrace;
 		this.pathToStackTrace = pathToStackTrace;
@@ -75,25 +74,12 @@ public class CrashFinderImplGetStackTrace {
 	{
 		if(this.stackTrace.equals("automatically"))
 		{
-			//String pathToWorkspace = this.build.getWorkspace().getRemote();
-			//FilePathAbsolutizer filePathAbsolutizer = new FilePathAbsolutizer(pathToWorkspace);
-			
-//			String pathResult = filePathAbsolutizer.absolutize("../");
-//			String pathToLogLastFailedBuild = pathResult + "/" + "builds/lastFailedBuild/log";
-//			listener.getLogger().println("Path to log " +
-//							"last failed: " + pathToLogLastFailedBuild);
-
-			List<String> logLines = build.getLog(Integer.MAX_VALUE);
+                        List<String> logLines = build.getLog(Integer.MAX_VALUE);
 			String contentLog = Joiner.on("\n").join(logLines);
-                        listener.getLogger().println("String contentLog: " + contentLog);
-//			String contentLog = DocumentReader.slurpStream(logStream);
-//			listener.getLogger().println("Log stream: " + logStream);
-
-			String pathToDirectoryStackTrace =
+                        String pathToDirectoryStackTrace =
 					CrashFinderImplSearchStackTrace
 							.searchStackTraceContent(contentLog);
-			listener.getLogger().println("path to directory stack trace: " +
-					pathToDirectoryStackTrace);
+			
 
 			this.listPathToStackTrace = CrashFinderImplSearchStackTrace.searchFileStackTrace(pathToDirectoryStackTrace);
 			this.listFullNameFailedTest = CrashFinderImplExtractionFailedTest
@@ -110,98 +96,39 @@ public class CrashFinderImplGetStackTrace {
 			
 		}else if(this.stackTrace.equals("manually") == true && this.pathToStackTrace.equals("") == true && this.fullNameFailedTestClass.equals("")==false)
 		{
-			
-                        /**
-			String pathToWorkspace = this.build.getWorkspace().getRemote();
-			FilePathAbsolutizer filePathAbsolutizer = new FilePathAbsolutizer(pathToWorkspace);
-			
-			String pathResult = null;
-			try {
-				pathResult = filePathAbsolutizer.absolutize("../");
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			
-			String pathToLogLastFailedBuild = pathResult + "/" + "builds/lastFailedBuild/log";
-			//File fileLogLastFailedBuild = new File(pathToLogLastFailedBuild);
-			String pathToDirectoryStackTrace = null;
-			try {
-				pathToDirectoryStackTrace = CrashFinderImplSearchStackTrace.searchPathToDirectoryStackTrace(pathToLogLastFailedBuild);
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-				listener.getLogger().println("Cannot found path to directory stack trace");
-			}**/
 			this.listFullNameFailedTest.add(this.fullNameFailedTestClass);
                         List<String> logLines = null;
                         try {
                             logLines = build.getLog(Integer.MAX_VALUE);
                         } catch (IOException ex) {
-                            //Logger.getLogger(CrashFinderImplGetStackTrace.class.getName()).log(Level.SEVERE, null, ex);
-                            listener.getLogger().println("Error get log lines");
+                            listener.getLogger().println("Error by getting log file");
                         }
 			String contentLog = Joiner.on("\n").join(logLines);
-                        listener.getLogger().println("String contentLog: " + contentLog);
-//			String contentLog = DocumentReader.slurpStream(logStream);
-//			listener.getLogger().println("Log stream: " + logStream);
-
-			String pathToDirectoryStackTrace =
+                        String pathToDirectoryStackTrace =
 					CrashFinderImplSearchStackTrace
 							.searchStackTraceContent(contentLog);
-			listener.getLogger().println("path to directory stack trace: " +
-					pathToDirectoryStackTrace);
+			
 			
 			try {
-				//this.listPathToStackTrace = CrashFinderImplSearchStackTrace.searchFileStackTrace(pathToWorkspace);
+				
 				this.listPathToStackTrace = CrashFinderImplSearchStackTrace.searchFileStackTrace(pathToDirectoryStackTrace);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-				listener.getLogger().println("Error search path to stack trace");
+				listener.getLogger().println("Error by searching path to stack trace");
 			}
 			
 		}else if(this.stackTrace.equals("manually") == true  && this.pathToStackTrace.equals("")==false && this.fullNameFailedTestClass.equals("")==true)
 		{
-			
-                        listener.getLogger().println("Miditra ato");
-			//String pathToWorkspace = this.build.getWorkspace().getRemote();
-			//FilePathAbsolutizer filePathAbsolutizer = new FilePathAbsolutizer(pathToWorkspace);
-			//String pathResult = null;
-			//try {
-			//	pathResult = filePathAbsolutizer.absolutize("../");
-			//} catch (IOException e) {
-				// TODO Auto-generated catch block
-			//	e.printStackTrace();
-			//}
-			
-			//String pathToLogLastFailedBuild = pathResult + "/" + "builds/lastFailedBuild/log";
-			//File fileLogLastFailedBuild = new File(pathToLogLastFailedBuild);
-                    	List<String> logLines = null;
-                        try {
-                            logLines = build.getLog(Integer.MAX_VALUE);
-                        } catch (IOException ex) {
-                            Logger.getLogger(CrashFinderImplGetStackTrace.class.getName()).log(Level.SEVERE, null, ex);
-                            listener.getLogger().println("Error by read log");
-                        }
+			List<String> logLines = null;
+            try {
+                       logLines = build.getLog(Integer.MAX_VALUE);
+                 } catch (IOException ex) {
+                       Logger.getLogger(CrashFinderImplGetStackTrace.class.getName()).log(Level.SEVERE, null, ex);
+                       listener.getLogger().println("Error by reading log file");
+                 }
 			String contentLog = Joiner.on("\n").join(logLines);
-                        //listener.getLogger().println("String contentLog: " + contentLog);
-//			String contentLog = DocumentReader.slurpStream(logStream);
-//			listener.getLogger().println("Log stream: " + logStream);
-
-			//String pathToDirectoryStackTrace =
-			//		CrashFinderImplSearchStackTrace
-			//				.searchStackTraceContent(contentLog);
-			//listener.getLogger().println("path to directory stack trace: " +
-			//		pathToDirectoryStackTrace);
-			//String contentLog = null;
-			//try {
-			//	contentLog = DocumentReader.slurpFile(fileLogLastFailedBuild);
-			//}catch (IOException e) {
-				// TODO Auto-generated catch block
-			//	e.printStackTrace();
-			//}
-			this.listFullNameFailedTest = CrashFinderImplExtractionFailedTest
+            this.listFullNameFailedTest = CrashFinderImplExtractionFailedTest
 					.extractClassNameFailedTest(contentLog,listener);
 			this.listPathToStackTrace.add(pathToStackTrace);
 		}

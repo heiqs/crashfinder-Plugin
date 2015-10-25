@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package de.uni.heidelberg.PlugIn;
 
 import com.google.common.base.Joiner;
@@ -32,7 +27,8 @@ import java.util.*;
 
 /**
  *
- * @author antsaharinala
+ * @author Antsa Harinala Andriamboavonjy, Dominik Fay
+ * Created in October 2015.
  */
 public final class CrashFinderPublisher extends Notifier {
     
@@ -43,14 +39,10 @@ public final class CrashFinderPublisher extends Notifier {
         
         private final String pathToJarPassingVersion;
         
-        //private final String pathToTestsJar;
-        
         private final String dependencyPathsPassing;
         
         private final String dependencyPathsFailing;
         
-        //private final String SCM;
-         
         private final String behaviour;
         
         private final String git;
@@ -131,8 +123,6 @@ public final class CrashFinderPublisher extends Notifier {
                 
                 this.pathToLogPathDir = pathToLogPathDir;
 
-                //this.pathToTestsJar = pathToTestsJar;
-                
                 this.dependencyPathsPassing = dependencyPathsPassing;
                 
                 this.dependencyPathsFailing = dependencyPathsFailing;
@@ -206,16 +196,6 @@ public final class CrashFinderPublisher extends Notifier {
         {
         	return pathToJarPassingVersion;
         }
-        
-        //public String getPathToStackTrace()
-        //{
-        //	return pathToStackTrace;
-        //}
-        
-        //public String getSCM()
-        //{
-        //    return this.SCM;
-        //}
         
         public String getGit()
         {
@@ -355,10 +335,11 @@ public final class CrashFinderPublisher extends Notifier {
                 String absPathJarPassing = absolutizer.absolutize(this.pathToJarPassingVersion);
                 String absPathJarFailing = absolutizer.absolutize(this.pathToJarFailingVersion);
                 String absPathSrcFileSystem = absolutizer.absolutize(this.pathToSrcFileSystem);
+                String absPathToStackTrace = absolutizer.absolutize(this.pathToStackTrace);
+                
                 //String absPathToTestsJar = absolutizer.absolutize(this.pathToTestsJar);
                 Collection<String> absPathsToDependenciesFailing = new HashSet<String>();
                 Collection<String> absPathsToDependenciesPassing = new HashSet<String>();
-                String absPathToStackTrace = absolutizer.absolutize(this.pathToStackTrace);
                 
                 Filewalker jarWalkerFailing = new Filewalker(".jar");
                 //long t0 = System.currentTimeMillis();
@@ -410,7 +391,7 @@ public final class CrashFinderPublisher extends Notifier {
                 String pathToRootPassing = getPassing.getPathToPassing();
                 
                 //Execute diff
-                listener.getLogger().println("Execute diff");
+                listener.getLogger().println("Execute diff ....");
                 
                 String pathToDiffOutput = pathToWorkspace + "/tmp-diff.diff";
                 File fileDiffOutput = new File(pathToDiffOutput);
@@ -442,14 +423,35 @@ public final class CrashFinderPublisher extends Notifier {
                 		new CrashFinderImplGetStackTrace
                 		(
                 			this.stackTrace,
-                			absPathToStackTrace,
+                                        absPathToStackTrace,
                 			this.fullNameFailedTestClass,
-							build,
-							listener);
+                                        build,
+                                        listener
+                                );
                 
                 crashFinderImplStackTrace.start();
                 ArrayList<String> listPathToStackTrace = crashFinderImplStackTrace.getListPathToStackTrace();
                 ArrayList<String> listFullnameFailedTest = crashFinderImplStackTrace.getListNameFailedTest();
+                
+                
+                if(this.stackTrace.equals("automatically") == true)
+                {
+                    if(listPathToStackTrace.size() == 0 || listFullnameFailedTest.size() == 0)
+                    {
+                        if(listPathToStackTrace.size() == 0 )
+                        {
+                            listener.getLogger().println("No path to stack trace found ....");
+                        }else if(listFullnameFailedTest.size() == 0)
+                        {
+                            listener.getLogger().println("No name found for failed test ....");
+                        }
+                    
+                        return true;
+                    }
+                    
+                }
+                
+                
                 
                 for(int i = 0 ; i < listPathToStackTrace.size(); i++)
                 {
@@ -461,7 +463,6 @@ public final class CrashFinderPublisher extends Notifier {
                 {
                 	listener.getLogger().println("Full name failed test class: " + listFullnameFailedTest.get(j));
                 }
-                
                 
                 //Create log directory
                 CrashFinderImplLog logger = new CrashFinderImplLog(absPathLogDir);
@@ -568,13 +569,13 @@ public final class CrashFinderPublisher extends Notifier {
                 FileUtils.copyURLToFile(new URL(hamcrestUrl), hamcrestJarFile);
 
                 Collection<String> commonJarsPassing = new ArrayList<String>(Arrays.asList(
-                		//absPathToTestsJar,
+                		
                 		junitJarFile.getCanonicalPath(),
                 		hamcrestJarFile.getCanonicalPath()
                 ));
                 
                 Collection<String> commonJarsFailing = new ArrayList<String>(Arrays.asList(
-                		//absPathToTestsJar,
+                		
                 		junitJarFile.getCanonicalPath(),
                 		hamcrestJarFile.getCanonicalPath()
                 ));
@@ -596,8 +597,7 @@ public final class CrashFinderPublisher extends Notifier {
                         (absPathToJunitOutputDir, "junit-failing.txt")
                         .getCanonicalPath();
 
-                //change
-                //String testClass = CrashFinderImplSearchStackTrace.extractTestClass(new File(pathToStackTrace));
+                
                 String testClass = listFullnameFailedTest.get(0);
                 listener.getLogger().println("Test class: " + testClass);
                 String testCommandTemplate = "java -cp \"%s\" org.junit" +
@@ -605,7 +605,7 @@ public final class CrashFinderPublisher extends Notifier {
                 
                 //execute test on passing version
                 listener.getLogger().println("Executing test on passing " +
-                        "version");
+                        "version .... ");
                 String commandTestPassingVersion = String.format
                         (testCommandTemplate, Joiner.on(':').join
                                 (passingJars), absPathToJunitOutputPassing);
@@ -616,7 +616,7 @@ public final class CrashFinderPublisher extends Notifier {
                         (new File(absPathToJunitOutputPassing)));
 
                 //execute test on failing version
-                listener.getLogger().println("Executing test on failing version");
+                listener.getLogger().println("Executing test on failing version .... ");
                 String commandTestFailingVersion = String.format
                         (testCommandTemplate, Joiner.on(':').join
                                 (failingJars), absPathToJunitOutputFailing);
@@ -646,10 +646,6 @@ public final class CrashFinderPublisher extends Notifier {
                 FileUtils.moveFileToDirectory(failingDumpFile,
                         new File(absPathLogDir), false);
 
-                //} catch(Exception e) {
-                    //FileUtils.deleteDirectory(new File(absPathFailingDir));
-                    //throw new RuntimeException(e);
-                //}
                
                
             }

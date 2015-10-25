@@ -7,8 +7,11 @@ import japa.parser.ast.CompilationUnit;
 import java.io.*;
 
 /**
- * Created by dominik on 05.10.15.
+ * 
+ * @author Dominik Fay.
+ * Created in October 2015.
  */
+
 public class PackageExtractor {
     private final File file;
 

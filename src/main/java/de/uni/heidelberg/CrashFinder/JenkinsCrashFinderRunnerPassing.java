@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package de.uni.heidelberg.CrashFinder;
 
 import com.ibm.wala.ipa.slicer.Statement;
@@ -20,14 +15,18 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+
 /**
+ * 
+ * @author Antsa Harinala Andriamboavonjy, Dominik Fay
+ * Created in October 2015
  *
- * @author Antsa Harinala Andriamboavonjy
  */
 public class JenkinsCrashFinderRunnerPassing implements CrashFinderRunner{
     
     
     private final JenkinsCrashFinderImplementation crashFinderImpl;
+    
     private Statement seedStatement;
 
     private BuildListener listener;
@@ -54,30 +53,18 @@ public class JenkinsCrashFinderRunnerPassing implements CrashFinderRunner{
         
     	try {
             
-            //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            //crashFinderImpl.initializeSlicing();
-            //crashFinderImpl.intersection();
-            //crashFinderImpl.backWardSlicing();
-            //crashFinderImpl.extractSeedStatement();
-            //crashFinderImpl.instrument();
-            
-            //String pathToStackTrace, Slicing slicing
-            
-            String pathToJar = crashFinderImpl.getPathToJarFile();
-            String pathToStackTrace = crashFinderImpl.getPathToStackTrace();
-            String pathToDiffFile = crashFinderImpl.getPathToDiffOut();
-            String pathToLogDiff = crashFinderImpl.getPathToLogDiff();
-            String pathToInstrJar = crashFinderImpl.getPathToInstrumentedJarFile();
-            String pathToLogSlicing = crashFinderImpl.getPathToLogSlicing();
-            
-            //String pathToInstrJar = crashFinderImpl.getPathToInstrumentedJarFile();
+    		String pathToJar = crashFinderImpl.getPathToJarFile();
+                String pathToStackTrace = crashFinderImpl.getPathToStackTrace();
+                String pathToDiffFile = crashFinderImpl.getPathToDiffOut();
+                String pathToLogDiff = crashFinderImpl.getPathToLogDiff();
+                String pathToInstrJar = crashFinderImpl.getPathToInstrumentedJarFile();
+                String pathToLogSlicing = crashFinderImpl.getPathToLogSlicing();
             
             //1. Slicing
+            listener.getLogger().println("Initializing slicing ....");
             Slicing slicing = crashFinderImpl.initializeSlicing(pathToJar);
             
-            //Statement seedStatement = null;
-            //seedStatement = crashFinderImpl.findSeedStatement(pathToStackTrace, slicing);
-			try {
+            try {
                 this.seedStatement = crashFinderImpl.findSeedStatementPassing
                         (this.seed, new File(pathToDiffFile), slicing);
                 this.seed = crashFinderImpl.getSeed();
@@ -88,10 +75,10 @@ public class JenkinsCrashFinderRunnerPassing implements CrashFinderRunner{
 
             //3.Backward slicing
             Collection<? extends Statement> slice = crashFinderImpl.backWardSlicing(seedStatement, slicing, pathToLogSlicing);
-            listener.getLogger().println("---START DUMP SLICE---");
+            //listener.getLogger().println("---START DUMP SLICE---");
             WALAUtils.dumpSlice(new ArrayList<Statement>(slice), new
                     PrintWriter(listener.getLogger()));
-            listener.getLogger().println("---END DUMP SLICE---");
+            //listener.getLogger().println("---END DUMP SLICE---");
             
             //4. Intersection
             Collection<Statement> intersection = null;
@@ -113,7 +100,7 @@ public class JenkinsCrashFinderRunnerPassing implements CrashFinderRunner{
                 }
                 // Escape special characters for regex use
                 prefix = Pattern.quote(prefix);
-                listener.getLogger().println("Prefix: " + prefix);
+                //listener.getLogger().println("Prefix: " + prefix);
                 while ((sCurrentLine = br.readLine()) != null) 
                 {
                     Pattern p = Pattern.compile("\\+++ " + prefix + "/(.*?)" +
@@ -131,7 +118,6 @@ public class JenkinsCrashFinderRunnerPassing implements CrashFinderRunner{
                                 .substring(0, fileName.length() - 5);
                         matching.add(fullClassName);
                         diffClass.add(fullClassName);
-                        listener.getLogger().println("Class found: " + fullClassName);
                         output.printf("%s\r\n", strFound);
                     }
                 }
@@ -143,15 +129,17 @@ public class JenkinsCrashFinderRunnerPassing implements CrashFinderRunner{
                 }
             }
             
+            listener.getLogger().println("Executing intersection ....");
             intersection = crashFinderImpl.intersection(matching,slice);
             
             //5. Instrument
+            listener.getLogger().println("Executing instrumentation ...");
             crashFinderImpl.instrument(pathToJar,pathToInstrJar, intersection);
             
             
         } catch (IOException ex) 
         {
-            //Logger.getLogger(JenkinsCrashFinderRunnerPassing.class.getName()).log(Level.SEVERE, null, ex);
+            
             throw new RuntimeException(ex.getMessage(), ex);
         }
         

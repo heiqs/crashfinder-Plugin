@@ -4,6 +4,12 @@ import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * 
+ * @author Dominik Fay
+ * Created in October 2015
+ */
+
 public class Filewalker {
 
     private final String suffix;

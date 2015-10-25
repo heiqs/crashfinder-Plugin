@@ -4,11 +4,14 @@ import java.util.regex.Pattern;
 import java.io.*;
 import java.util.*;
 
-	/**
-	 * 
-	 * This class enables to determine if a given file is an html, xml file or not
-	 *
-	 */
+/**
+ * Detect HTML markup in a string
+ * This will detect tags or entities
+ *
+ * @author dbennett455@gmail.com - David H. Bennett
+ *
+ */
+	
 public class DetectionXMLHTML {
     
     // adapted from post by Phil Haack and modified to match better

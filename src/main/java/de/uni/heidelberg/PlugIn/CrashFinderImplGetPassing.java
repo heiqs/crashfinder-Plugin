@@ -1,26 +1,3 @@
-/*
- * The MIT License
- *
- * Copyright 2015 antsaharinala.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
 package de.uni.heidelberg.PlugIn;
 
 import hudson.FilePath;
@@ -36,24 +13,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import de.uni.heidelberg.Utils.*;
-//import static de.uni.heidelberg.Utils.ExtractionFilenamePath.*;
 import org.jenkinsci.remoting.RoleChecker;
 
 /**
- * The plugIn is able to get an old passing version of the project.
- * There are three different ways to achieve this goal:
  * 
- * 1.  By using standard software version control like Git or Subversion. By using Git for example, the user of the plugIn
- * is able to get the passing version by defining the number of back commit. In case of subVersion, the revision number 
- * the passing version is given to be checked out.
-
- * 2. The second option consists of simply giving a command checking out the passing version from SCM.
- * The command is the same as used in shell in Unix-operating system.
  * 
- * 3. The third option simply captures the source code of the passing version from file system. 
- * The entry is the path to the project. 
  * 
  * @author Antsa Harinala Andriamboavonjy
+ * Created on October 2015
  */
 public class CrashFinderImplGetPassing implements FilePath.FileCallable {
   
@@ -165,13 +132,13 @@ public class CrashFinderImplGetPassing implements FilePath.FileCallable {
     }
     
     /**
-     * This method executes the command given by the user to check out the old passing version from a scm
+     * This method executes the command given by the user to check out an earlier version of the project.
      * @throws InterruptedException
      * @throws IOException 
      */
     public void executeCommandCheckOutPassing() throws InterruptedException, IOException
     {
-    	listener.getLogger().println("Execute check out from command line");
+    	
     	String pathToPassingDir = build.getWorkspace().getRemote() + "/" + this.filenamePassing;
         File dirPassing = new File(pathToPassingDir);
         if(dirPassing.exists()== false)
@@ -199,13 +166,12 @@ public class CrashFinderImplGetPassing implements FilePath.FileCallable {
     }
     
     /**
-     * This method executes check out of a given revision number of the project.
+     * This method checks out an earlier version of the project from subVersion.
      * @throws InterruptedException
      * @throws IOException 
      */
     public void executeSVNCheckOutWithRevisionNumber() throws InterruptedException, IOException
     {
-       listener.getLogger().println("SVN check out from revision number");
        String pathToPassingDir = build.getWorkspace().getRemote() + "/" + this.filenamePassing;
        File dirPassing = new File(pathToPassingDir);
        if(dirPassing.exists()== false)
@@ -256,7 +222,7 @@ public class CrashFinderImplGetPassing implements FilePath.FileCallable {
    }
     
     /**
-     * This method executes the check out of the project which is committed before the current one's
+     * Method check out an older version of the project with git.
      * @throws InterruptedException
      * @throws IOException 
      */

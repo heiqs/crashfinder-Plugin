@@ -1,29 +1,5 @@
 package de.uni.heidelberg.PlugIn;
 
-/*
- * The MIT License
- *
- * Copyright 2015 Antsa Harinala Andriamboavonjy.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
-
 import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -38,19 +14,19 @@ import de.uni.heidelberg.Utils.DocumentReader;
 
 
 /**
- * This class allows the search for stacktrace file after running test. 
+ * 
  * @author Antsa Harinala Andriamboavonjy
+ * Created in October 2015
  */
 public class CrashFinderImplSearchStackTrace{
     
 	/**
-	 * This method extracts all files containing in a given directory
-	 * @param parentDirectory - path to parent directory
-	 * @param fileResult - list containing File in the parent directory
-	 *
-	 */
-    public static void listf(String parentDirectory, ArrayList<File> fileResult) 
-    {
+         * List all files containing in a directory
+         * @param parentDirectory
+         * @param fileResult 
+         */
+	public static void listf(String parentDirectory, ArrayList<File> fileResult) 
+        {
             File directory = new File(parentDirectory);
             File[] fList = directory.listFiles();
             for(File file : fList) 
@@ -75,12 +51,13 @@ public class CrashFinderImplSearchStackTrace{
             }
     }
 	
-	/**
-	 * Checks whether file contains stack trace.
-	 * @param file 
-	 * @return
-	 * @throws IOException
-	 */
+
+    /**
+      * Check whether a file is stack trace.
+      * @param file 
+      * @return
+      * @throws IOException 
+    */
     public static boolean isFileStackTrace(File file) throws IOException
     {
 		boolean isStackTrace = false;
@@ -102,45 +79,10 @@ public class CrashFinderImplSearchStackTrace{
 	}
 
             
-    /**
-     * This method extracts errors messages containing in xml or html File.
-     * @param fileStackTrace - File containing stack trace
-     * @param listener - 
-     * @return string errors
-     * @throws IOException
-     */
-    /**
-    public static String extractErrorMessageHTMLXML(File fileStackTrace) throws IOException
-	{
-		
-    		String fileContent = DocumentReader.slurpFile(fileStackTrace);
-    		String error = "";
-		
-    		String startTag =  "\\<\\w+((\\s+\\w+(\\s*\\=\\s*(?:\".*?\"|'.*?'|[^'\"\\>\\s]+))?)+\\s*|\\s*)\\>";
-			String endTag = "\\</\\w+\\>";
-			
-			String regex = startTag + "([^<]*)" + endTag; // + endTag ;
-			Pattern pattern = Pattern.compile(regex);
-			Matcher matcher = pattern.matcher(fileContent);
-			while(matcher.find())
-			{
-                                
-				String result = matcher.group();
-				String newRegex = "([a-zA-Z]+)Exception:(\\s*([^<]*))+";
-				Pattern newPattern = Pattern.compile(newRegex);
-				Matcher newMatcher = newPattern.matcher(result);
-				if(newMatcher.find())
-				{
-					error = error + newMatcher.group().trim() + "\n";
-                }
-			}
-			return error;
-                
-     }
-      **/
+   
     
     /**
-     * Search for stack trace file. 
+     * Search stack trace file 
      * @param parentDirectory - path to the parent directory
      * @param listener
      * @return
@@ -163,27 +105,17 @@ public class CrashFinderImplSearchStackTrace{
 				String absPathFile = file.getAbsolutePath();
                                 listPathToStackTrace.add(absPathFile);
                                 return listPathToStackTrace;
-                        }//end if
+             }
 			
-		}//end for
+		}
 		
 		return listPathToStackTrace;
                 
-	}//end method
-	
-	/**
-	public static String extractTestClass(File stackTraceFile) throws
-		IOException
-	{
-			BufferedReader reader = new BufferedReader(new FileReader(stackTraceFile));
-		    reader.readLine();
-		    String secondLine = reader.readLine();
-		    return secondLine.replace("Test set:", "").trim();
-	}*/
+	}
 	
 	
 	/**
-	 * Retrieve parent directory where stack trace file is stored.
+	 * Retrieve parent directory where stack trace file is placed.
 	 * @param pathToLog - path to log of the last failed build
 	 * @return path to the parent directory containing the stack trace
 	 * @throws IOException
@@ -207,6 +139,13 @@ public class CrashFinderImplSearchStackTrace{
 		return pathToStackTraceDir;
 	}
 
+        /**
+         * Search path to directory containing stack trace
+         * @param logInputStream
+         * @param listener
+         * @return
+         * @throws IOException 
+         */
 	public static String searchPathToDirectoryStackTrace(InputStream
 																 logInputStream, BuildListener listener) throws IOException {
 		String pathToStackTraceDir = "";
@@ -230,38 +169,28 @@ public class CrashFinderImplSearchStackTrace{
 		return pathToStackTraceDir;
 	}
 
+        /**
+         * Search for the path to the directory where the stack trace is placed from content 
+         * log file.
+         * @param contentLog - content of log file.
+         * @return 
+         */
 	public static String searchStackTraceContent(String contentLog) {
-		String pathToStackTraceDir = null;
-                System.out.println("Content log: " + contentLog);
-		String regex = "\\[INFO\\]\\s+Surefire report directory:" + "(.*)";
-		Pattern pattern = Pattern.compile(regex);
-		Matcher matcher = pattern.matcher(contentLog);
-		while(matcher.find())
-		{
-			pathToStackTraceDir = matcher.group(1).trim();
-		}
-		if (pathToStackTraceDir == null) {
-			throw new RuntimeException("Regex not matched.");
-		}
-		return pathToStackTraceDir;
+		
+            String pathToStackTraceDir = null;
+            String regex = "\\[INFO\\]\\s+Surefire report directory:" + "(.*)";
+            Pattern pattern = Pattern.compile(regex);
+            Matcher matcher = pattern.matcher(contentLog);
+            while(matcher.find())
+            {
+                pathToStackTraceDir = matcher.group(1).trim();
+            }
+		
+            if (pathToStackTraceDir == null) {
+                throw new RuntimeException("Regex not matched.");
+            }
+		
+            return pathToStackTraceDir;
 	}
-
-
-	/**
-	public static void main(String[] args) throws IOException
-	{
-		String pathToParentDirectory = "/home/antsaharinala/.jenkins/workspace/Correct_Version_Hadoop"; 
-		ArrayList<String> pathToStackTrace = CrashFinderImplSearchStackTrace.searchFileStackTrace(pathToParentDirectory);
-		System.out.println("Path to stack trace: " + pathToStackTrace.get(0));
-		
-		
-		String pathToStackTrace = "/home/antsaharinala/crashFinder-dump/Log.log";
-		File fileStackTrace = new File(pathToStackTrace);
-		boolean isStackTrace = CrashFinderImplSearchStackTrace.isFileStackTrace(fileStackTrace);
-		System.out.println("Is stack trace: " + isStackTrace);
-	}**/
-
-
-        
 }
 

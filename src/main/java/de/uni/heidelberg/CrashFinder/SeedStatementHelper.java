@@ -7,7 +7,9 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Created by dominik on 13.10.15.
+ * 
+ * @author Dominik Fay
+ * Created in October 2015.
  */
 public class SeedStatementHelper {
     private final List<String> lines;

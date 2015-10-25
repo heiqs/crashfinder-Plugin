@@ -5,6 +5,12 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * 
+ * @author Antsa Harinala Andriamboavonjy
+ * Created in October 2015
+ */
+
 public class ExtractionDiffJava {
 	
 	public static void extractDiffJavaFile(String strInputDiff, File fileOutput, String regexStartCommandDiff) throws IOException

@@ -22,11 +22,11 @@
     <f:textbox default="./" />
  </f:entry>
  
- <f:entry title="Stack trace">
+ <f:entry title="Stack trace and name of failed test">
  	<f:nested>
  		<table>
- 			<f:radioBlock title="Get stack trace automatically" name="stackTrace"  value="automatically" checked="${instance.stackTrace == 'automatically'}" inline="true"/>
- 			<f:radioBlock title="Get stack trace manually" name="stackTrace"  value="manually" checked="${instance.stackTrace == 'manually'}" inline="true">
+ 			<f:radioBlock title="Get stack trace and name failed test automatically" name="stackTrace"  value="automatically" checked="${instance.stackTrace == 'automatically'}" inline="true"/>
+ 			<f:radioBlock title="Get stack trace nnd name failed test manually" name="stackTrace"  value="manually" checked="${instance.stackTrace == 'manually'}" inline="true">
  				 <f:nested> 
                     <table style="margin-left: 65px; width: 800px;">
                         <f:entry title="Path to stack trace" field="pathToStackTrace">

@@ -12,7 +12,9 @@ import java.io.*;
 
 /**
  *
- * @author antsaharinala
+ * @author Antsa Harinala Andriamboavonjy,Dominik Fay
+ * Created in October 2015
+ * 
  */
 public interface CrashFinderImplementation {
     

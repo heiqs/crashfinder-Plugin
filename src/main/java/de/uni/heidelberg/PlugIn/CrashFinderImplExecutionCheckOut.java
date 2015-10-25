@@ -13,6 +13,11 @@ import hudson.remoting.VirtualChannel;
 import hudson.tasks.CommandInterpreter;
 import hudson.tasks.Shell;
 
+/**
+ * 
+ * @author Antsa Harinala Andriamboavonjy
+ * Created in October 2015
+ */
 public class CrashFinderImplExecutionCheckOut implements FileCallable{
 	
 	private String commandCheckOut;

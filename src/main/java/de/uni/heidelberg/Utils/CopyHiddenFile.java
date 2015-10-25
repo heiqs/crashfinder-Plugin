@@ -8,7 +8,7 @@ import org.apache.commons.io.FileUtils;
 /**
  * 
  * @author Antsa Harinala Andriamboavonjy
- *
+ * Created in October 2015.
  */
 
 public class CopyHiddenFile {

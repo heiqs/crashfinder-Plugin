@@ -40,7 +40,8 @@ import java.util.logging.Logger;
 
 /**
  *
- * @author Antsa Harinala
+ * @author Antsa Harinala Andriamboavonjy, Dominik Fay.
+ * Created in October 2015.
  */
 public class JenkinsCrashFinderImplementation implements CrashFinderImplementation{
 
@@ -226,38 +227,9 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
     @Override
     public Slicing initializeSlicing(final String jar)
     {
-	//final String exclusionsFileName = "JavaAllExclusions.txt";
-	//try{
-                //if (!new File(canonicalJoin(canonicalWorkspacePath,
-		//			exclusionsFileName)).exists()) {
-                /**
-                    if(!new File(this.pathToExclusionFile).exists())
-                    {
-				/*
-				 * load exclusions file as resource and copy into workspace,
-				 * because Slicing() needs a file path as input
-				 */
-		//		ClassLoader classloader = this.getClass().getClassLoader();
-		//		BufferedReader is = new BufferedReader(new InputStreamReader(
-		//				classloader
-		//						.getResourceAsStream("JavaAllExclusions.txt")));
-		//		PrintWriter os = new PrintWriter(new FileOutputStream(
-		//				canonicalJoin(canonicalWorkspacePath,
-		//						"JavaAllExclusions.txt")));
-		//		for (String line = is.readLine(); line != null; line = is
-		//				.readLine()) {
-		//			os.println(line);
-		//		}
-		//		is.close();
-		//		os.close();
-		//	}
-		//} catch (IOException e) {
-		//	listener.getLogger().println(e.getStackTrace());
-		//}
-
-               // now the actual slicing
+	
 		Slicing helper = null;
-                helper = new Slicing(jar, "", pathToExclusionFile);
+        helper = new Slicing(jar, "", pathToExclusionFile);
 		helper.CallGraphBuilder();
 		helper.setDataDependenceOptions(DataDependenceOptions.NONE);
 		helper.setControlDependenceOptions(ControlDependenceOptions.NO_EXCEPTIONAL_EDGES);
@@ -266,17 +238,7 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
 
     }
 
-    /**
-    public Collection<? extends Statement> backWardSlicing(Statement seedStatement, Slicing helper)
-    {
-        try {
-		return helper.computeSlice(seedStatement);
-
-            } catch (CancelException e) {
-		e.printStackTrace();
-		return null;
-            }
-    }**/
+    
 
     @Override
     public Statement findSeedStatementFailing(String pathToStackTrace, Slicing slicing)throws IOException
@@ -286,8 +248,6 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
                 "statement in file " + pathToStackTrace);
 		int lineNumber = computeSeed.computeSeed(pathToStackTrace)
 				.getLineNumber();
-		//String seedClass = computeSeed.computeSeed(pathToStackTrace)
-		//		.getSeedClass();
 		String seedClass = computeSeed.computeSeed(pathToStackTrace)
 					.getSeedClass();
         this.seed = seedClass + ":" + lineNumber;
@@ -358,19 +318,7 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
     }
 
 
-    /**
-    private Collection<? extends Statement> backwardSlice(Statement seedStatement, Slicing helper)
-    {
-	try {
-		return helper.computeSlice(seedStatement);
-		
-            } catch (CancelException e) {
-		e.printStackTrace();
-		return null;
-            }
-    }**/
     
-    //new
     @Override
     public Collection<? extends Statement> backWardSlicing(Statement seedStatement, Slicing helper, String pathToLogSlicing) throws FileNotFoundException 
     {
@@ -379,41 +327,6 @@ public class JenkinsCrashFinderImplementation implements CrashFinderImplementati
 		slice = helper.computeSlice(seedStatement);
                 WALAUtils.dumpSliceToFile(slice,pathToLogSlicing);
 
-        /**
-		SlicingOutput output1 = helper.outputSlice(s);
-                
-		try {
-			output = new PrintWriter(
-					new BufferedWriter(new FileWriter(diffout)));
-			output.write("");
-
-			br = new BufferedReader(new FileReader(diff));
-			while ((sCurrentLine = br.readLine()) != null) {
-				//Pattern p = Pattern.compile("\\+++ /home/felix/2/(.*?).java");
-				Pattern p = Pattern.compile("\\+++ (.*)/(.*?).java");
-				Matcher m = p.matcher(sCurrentLine);
-				if (m.find()) {
-					String strFound = m.group(2);
-					matching.add(strFound);
-					diffClass.add(strFound);
-					//this.buildListener.getLogger().println("Str found: " + strFound);
-					output.printf("%s\r\n", strFound);
-				}
-			}
-			/**
-			 for (String line : matching) {
-			 //line = line.replaceAll("\\+++ /home/felix/2/", "");
-			 line = line.replaceAll("\\+++ (.*)/2/", "");
-			 line = line.replaceAll("\\.java", "");
-			 System.out.println(line);
-			 line = line.replace("/", ".");
-			 // sCurrentLine = sCurrentLine.replace("/", ".");
-			 diffClass.add(line);
-			 output.printf("%s\r\n", line);
-			 }**/
-
-		
-                
     	}catch (CancelException e)
     	{
     	   	e.printStackTrace();

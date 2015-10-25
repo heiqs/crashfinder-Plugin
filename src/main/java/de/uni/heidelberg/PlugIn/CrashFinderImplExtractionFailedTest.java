@@ -9,8 +9,7 @@ import java.util.regex.Pattern;
 /**
  * 
  * @author Antsa Harinala Andriamboavonjy
- * This class is mainly used to extract the name of the failed test from log file
- * of jenkins
+ * Created in October 2015
  */
 
 public class CrashFinderImplExtractionFailedTest {
@@ -78,7 +77,6 @@ public class CrashFinderImplExtractionFailedTest {
 		listener.getLogger().println("Input 3: " + input);
 		ArrayList<String> listFailedTest = new ArrayList<String> ();
 		String beginRegex = "Results\\s?:\\n+";
-		//String regex = beginRegex + "Failed tests: " + "(.*?)" + "\\n";
 		String regex = beginRegex  + "(.*?)" + ":\\s*" + "(.*?)" + "\\n";
 		
 		Pattern pattern = Pattern.compile(regex,Pattern.DOTALL);
@@ -87,43 +85,23 @@ public class CrashFinderImplExtractionFailedTest {
 		{
 			
 			String strFound = matcher.group(2);
-                        listener.getLogger().println("String found: " + strFound);
-			for ( int k = 0 ; k < listTest.size() ; k++)
+            for ( int k = 0 ; k < listTest.size() ; k++)
 			{
 				String fullNameTest = listTest.get(k);
 				if(strFound.contains(fullNameTest))
 			    {
 					listFailedTest.add(fullNameTest);
-                                        listener.getLogger().println("Test: " + fullNameTest);
-					return listFailedTest;
+                    return listFailedTest;
 			    }
 				
-			}//end for
+			}
 			
-		}//end while
+		}
 		
 		return listFailedTest;
 	}
 	
 	
-	/**
-	public static void main(String[]args) throws IOException
-	{
-		String pathToLastFailedBuildLog = "/home/antsaharinala/BugLocator/WorkspaceNetbeans/BugLocator/work/jobs/musicfailingVersion/builds/lastFailedBuild/log";
-		File fileLastFailedBuildLog = new File(pathToLastFailedBuildLog);
-		String contentLog = DocumentReader.slurpFile(fileLastFailedBuildLog);
-		//ArrayList<String> listTest = new ArrayList<String> ();
-		ArrayList<String> listFailedTest = new ArrayList<String>();
-		
-		listFailedTest = CrashFinderImplExtractionNameFailedTest.extractClassNameFailedTest(contentLog);
-		
-		
-		System.out.println("List failed test");
-		for ( int j = 0 ; j < listFailedTest.size() ; j++)
-		{
-			System.out.println(listFailedTest.get(j));
-		}
 
-	}**/
 	
 }

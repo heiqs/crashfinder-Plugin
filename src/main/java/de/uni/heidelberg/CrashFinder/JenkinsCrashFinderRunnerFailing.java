@@ -15,6 +15,12 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * 
+ * @author Antsa Harinala Andriamboavonjy, Dominik Fay
+ * Created in October 2015.
+ *
+ */
 public class JenkinsCrashFinderRunnerFailing implements CrashFinderRunner{
 	
 		private final JenkinsCrashFinderImplementation crashFinderImpl;
@@ -51,25 +57,25 @@ public class JenkinsCrashFinderRunnerFailing implements CrashFinderRunner{
 	            String pathToLogSlicing = crashFinderImpl.getPathToLogSlicing();
 	            
 	            //1. Slicing
+                    listener.getLogger().println("Initializing slicing ....");
 	            Slicing slicing = crashFinderImpl.initializeSlicing(pathToJar);
 				if (slicing == null) {
 					throw new NullPointerException("Slicing is null");
 				}
 	            
-	            //Statement seedStatement = null;
-	            //seedStatement = crashFinderImpl.findSeedStatement(pathToStackTrace, slicing);
+	            listener.getLogger().println("Find seed statement ....");
 	            Statement seedStatement = crashFinderImpl.findSeedStatementFailing(pathToStackTrace, slicing);
 	            this.seed = crashFinderImpl.getSeed();
 				this.seedStatement = seedStatement;
 				listener.getLogger().println("Seed runner: " + seed);
-	            listener.getLogger().println("Statement: " + seedStatement.toString());
+	            //listener.getLogger().println("Statement: " + seedStatement.toString());
 				//this.seed = seedStatement.toString();
 	            //3.Backward slicing
 	            Collection<? extends Statement> slice = crashFinderImpl.backWardSlicing(seedStatement, slicing, pathToLogSlicing);
-	            listener.getLogger().println("---START DUMP SLICE---");
+	            //listener.getLogger().println("---START DUMP SLICE---");
 	            WALAUtils.dumpSlice(new ArrayList<Statement>(slice), new
 	                    PrintWriter(listener.getLogger()));
-	            listener.getLogger().println("---END DUMP SLICE---");
+	            //listener.getLogger().println("---END DUMP SLICE---");
 	            
 	            //4. Intersection
 	            Collection<Statement> intersection = null;
@@ -91,7 +97,7 @@ public class JenkinsCrashFinderRunnerFailing implements CrashFinderRunner{
 	                }
 	                // Escape special characters for regex use
 	                prefix = Pattern.quote(prefix);
-	                listener.getLogger().println("Prefix: " + prefix);
+	                //listener.getLogger().println("Prefix: " + prefix);
 	                while ((sCurrentLine = br.readLine()) != null) 
 	                {
 	                    Pattern p = Pattern.compile("\\+++ " + prefix + "/(.*?)" +
@@ -109,7 +115,7 @@ public class JenkinsCrashFinderRunnerFailing implements CrashFinderRunner{
 	                                .substring(0, fileName.length() - 5);
 	                        matching.add(fullClassName);
 	                        diffClass.add(fullClassName);
-	                        listener.getLogger().println("Class found: " + fullClassName);
+	                        //listener.getLogger().println("Class found: " + fullClassName);
 	                        output.printf("%s\r\n", strFound);
 	                    }
 	                }
@@ -124,9 +130,11 @@ public class JenkinsCrashFinderRunnerFailing implements CrashFinderRunner{
 	                }
 	            }
 	            
+                    listener.getLogger().println("Executing intersection ...");
 	            intersection = crashFinderImpl.intersection(matching,slice);
 	            
 	            //5.Instrument
+                    listener.getLogger().println("Executing instrumentation ...");
 	            crashFinderImpl.instrument(pathToJar,pathToInstrJar, intersection);
 	            
 	          

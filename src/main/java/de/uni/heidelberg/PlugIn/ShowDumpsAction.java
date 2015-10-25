@@ -6,6 +6,12 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 
+/**
+ * 
+ * @author Dominik Fay
+ * created in October 2015.
+ */
+
 public class ShowDumpsAction implements Action {
 
     private final String passingDumpFile;
