@@ -10,9 +10,9 @@
     <version>1.580.1</version>
     <relativePath/>
   </parent>
-  <groupId>de.hdu.pvs</groupId>
+  <groupId>com.github.heiqs</groupId>
   <artifactId>crashfinder-plugin</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.0.0</version>
   <packaging>hpi</packaging>
 
   <name>CrashFinder Plugin</name>
@@ -54,10 +54,9 @@
   </pluginRepositories>
   <dependencies>
      <dependency>
-          <groupId>de.hdu.pvs</groupId>
+          <groupId>com.github.heiqs</groupId>
           <artifactId>crashFinder</artifactId>
-          <version>1.0.0-SNAPSHOT</version>
-       <type>jar</type>
+          <version>1.0.0</version>
      </dependency>
       <dependency>
           <groupId>com.ibm.wala</groupId>
@@ -75,5 +74,4 @@
       <version>1.0.8</version>
     </dependency>
   </dependencies>
-  
 </project>
