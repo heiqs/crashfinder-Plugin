@@ -11,7 +11,7 @@
     <relativePath/>
   </parent>
   <groupId>com.github.heiqs</groupId>
-  <artifactId>crashfinder-plugin</artifactId>
+  <artifactId>crashfinder</artifactId>
   <version>1.0.0</version>
   <packaging>hpi</packaging>
 
