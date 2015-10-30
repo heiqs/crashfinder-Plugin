@@ -12,7 +12,7 @@
   </parent>
   <groupId>com.github.heiqs</groupId>
   <artifactId>crashfinder</artifactId>
-  <version>1.0.0</version>
+  <version>2.0.0</version>
   <packaging>hpi</packaging>
 
   <name>CrashFinder Plugin</name>
