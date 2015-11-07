@@ -4,8 +4,8 @@ import com.google.common.base.Joiner;
 import com.ibm.wala.ipa.slicer.Statement;
 
 import de.hdu.pvs.crashfinder.JenkinsCrashFinderImplementation;
-import de.hdu.pvs.crashfinder.JenkinsCrashFinderRunnerFailing;
-import de.hdu.pvs.crashfinder.JenkinsCrashFinderRunnerPassing;
+import de.hdu.pvs.crashfinder.CrashFinderRunnerFailing;
+import de.hdu.pvs.crashfinder.CrashFinderRunnerPassing;
 import de.hdu.pvs.utils.*;
 //import de.uni.heidelberg.CrashFinder.JenkinsCrashFinderRunner;
 import hudson.EnvVars;
@@ -254,7 +254,7 @@ public final class CrashFinderPublisher extends Notifier {
 			return true;
 		} else {
 
-			CheckInput crashFinderImplException = new CheckInput(
+			CrashFinderCheckInput crashFinderImplException = new CrashFinderCheckInput(
 					pathToLogPathDir,
 					pathToJarFailingVersion,
 					pathToJarPassingVersion,
@@ -327,7 +327,7 @@ public final class CrashFinderPublisher extends Notifier {
 			FilePath filePathPassingDir = new FilePath(filePassingDir);
 
 			// check out passing version
-			GetPassingVersion getPassing = new GetPassingVersion(behaviour,
+			CrashFinderGetPassingVersion getPassing = new CrashFinderGetPassingVersion(behaviour,
 					git, svn, commandCheckOutPassing, absPathSrcFileSystem,
 					gitNumberCommitBack, svnRevisionNumb, usernameSvn,
 					passwordSvn, usernameSvnCommand, passwordSvnCommand, build,
@@ -343,7 +343,7 @@ public final class CrashFinderPublisher extends Notifier {
 			File fileDiffOutput = new File(pathToDiffOutput);
 
 			String regexStartCommandDiff = "diff -ENwbur";
-			;
+			
 			String commandDiff = regexStartCommandDiff + " --exclude=\""
 					+ "PASSING\" " + pathToRootPassing + " " + pathToWorkspace
 					+ " > " + pathToWorkspace + "/tmp-diff.diff";
@@ -370,7 +370,7 @@ public final class CrashFinderPublisher extends Notifier {
 			// delete passing version, not needed anymore
 			FileUtils.deleteDirectory(new File(absPathPassingDir));
 
-			GetStackTrace crashFinderImplStackTrace = new GetStackTrace(
+			CrashFinderGetStackTrace crashFinderImplStackTrace = new CrashFinderGetStackTrace(
 					this.stackTrace, absPathToStackTrace,
 					this.fullNameFailedTestClass, build, listener);
 
@@ -408,7 +408,7 @@ public final class CrashFinderPublisher extends Notifier {
 			}
 
 			// Create log directory
-			Log logger = new Log(absPathLogDir);
+			CrashFinderLog logger = new CrashFinderLog(absPathLogDir);
 			listener.getLogger().println("Log path: " + absPathLogDir);
 
 			// Diff log
@@ -478,7 +478,7 @@ public final class CrashFinderPublisher extends Notifier {
 					pathToLogSlicingFailing, pathToWorkspace, listener, build,
 					launcher);
 
-			JenkinsCrashFinderRunnerFailing runnerFailing = new JenkinsCrashFinderRunnerFailing(
+			CrashFinderRunnerFailing runnerFailing = new CrashFinderRunnerFailing(
 					JenkCrashFinderFailing, listener);
 			runnerFailing.runner();
 			String seed = runnerFailing.getSeed();
@@ -494,7 +494,7 @@ public final class CrashFinderPublisher extends Notifier {
 					absPathJarPassing, pathToInstrJarPassing,
 					pathToLogSlicingPassing, pathToWorkspace, listener, build,
 					launcher);
-			JenkinsCrashFinderRunnerPassing runnerPassing = new JenkinsCrashFinderRunnerPassing(
+			CrashFinderRunnerPassing runnerPassing = new CrashFinderRunnerPassing(
 					JenkinsCrashFinderPassing, listener, seed);
 			runnerPassing.runner();
 
@@ -657,7 +657,7 @@ public final class CrashFinderPublisher extends Notifier {
 			DocumentWriter.writeArrayDocument(diffCoverage, diffCoverageFile);
 			DocumentWriter.writeArrayDocument(diffCoverageLoc, diffCoverageLocFile);
 			// move profiles to the result directory
-			build.addAction(new ShowDumpsAction(diffCoverageLoc, diffCoverage,
+			build.addAction(new CrashFinderShowDumpsAction(diffCoverageLoc, diffCoverage,
 					failReader, passReader));
 			
 			FileUtils.moveFileToDirectory(passingProfile, new File(
