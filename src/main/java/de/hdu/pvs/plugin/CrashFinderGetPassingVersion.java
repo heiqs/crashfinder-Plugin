@@ -23,6 +23,11 @@ import org.jenkinsci.remoting.RoleChecker;
  */
 public class CrashFinderGetPassingVersion implements FilePath.FileCallable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -3871547375863960372L;
+
 	// Variable specifies
 	private final String behaviour;
 

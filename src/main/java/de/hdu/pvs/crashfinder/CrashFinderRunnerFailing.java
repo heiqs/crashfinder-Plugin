@@ -1,11 +1,13 @@
 package de.hdu.pvs.crashfinder;
 
 import com.ibm.wala.ipa.slicer.Statement;
+import com.ibm.wala.util.CancelException;
 
-import de.hdu.pvs.crashfinder.analysis.FindSeed;
+import de.hdu.pvs.crashfinder.analysis.FindFailingSeed;
+import de.hdu.pvs.crashfinder.analysis.Intersection;
 import de.hdu.pvs.crashfinder.analysis.Slicing;
+import de.hdu.pvs.crashfinder.instrument.InstrumenterMain;
 import de.hdu.pvs.crashfinder.util.WALAUtils;
-import de.hdu.pvs.utils.PackageExtractor;
 import hudson.model.BuildListener;
 
 import java.io.*;
@@ -14,8 +16,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
 
 /**
  * 
@@ -24,7 +25,7 @@ import java.util.regex.Pattern;
  */
 public class CrashFinderRunnerFailing implements CrashFinderRunner {
 
-	private final JenkinsCrashFinderImplementation crashFinderImpl;
+	private final CrashFinderImplementation crashFinderImpl;
 
 	private BuildListener listener;
 
@@ -33,7 +34,7 @@ public class CrashFinderRunnerFailing implements CrashFinderRunner {
 	private Statement seedStatement = null;
 
 	public CrashFinderRunnerFailing(
-			JenkinsCrashFinderImplementation crashFinderImpl,
+			CrashFinderImplementation crashFinderImpl,
 			BuildListener listener) {
 		this.crashFinderImpl = crashFinderImpl;
 		this.listener = listener;
@@ -53,96 +54,50 @@ public class CrashFinderRunnerFailing implements CrashFinderRunner {
 			String pathToJar = crashFinderImpl.getPathToJarFile();
 			String pathToStackTrace = crashFinderImpl.getPathToStackTrace();
 			String pathToDiffFile = crashFinderImpl.getPathToDiffOut();
-			String pathToLogDiff = crashFinderImpl.getPathToLogDiff();
 			String pathToInstrJar = crashFinderImpl
 					.getPathToInstrumentedJarFile();
 			String pathToLogSlicing = crashFinderImpl.getPathToLogSlicing();
+			String pathToExclusionFile = crashFinderImpl.getPathToExclusionFile();
 
 			// 1. Slicing
 			listener.getLogger().println("Initializing slicing ....");
-			Slicing slicing = crashFinderImpl.initializeSlicing(pathToJar);
-			if (slicing == null) {
-				throw new NullPointerException("Slicing is null");
-			}
+			Slicing slicing = crashFinderImpl.initializeSlicing(pathToJar, pathToExclusionFile);
 
-			listener.getLogger().println("Find seed statement ....");
-			Statement seedStatement = crashFinderImpl.findSeedStatementFailing(
-					pathToStackTrace, slicing);
-			this.seed = crashFinderImpl.getSeed();
-			this.seedStatement = seedStatement;
-			listener.getLogger().println("Seed runner: " + seed);
-			// listener.getLogger().println("Statement: " +
-			// seedStatement.toString());
-			// this.seed = seedStatement.toString();
+			listener.getLogger().println("Find failing seed statement ....");
+			FindFailingSeed computeFailingSeed = new FindFailingSeed();
+			listener.getLogger().println("stack: "+pathToStackTrace);
+			
+			Statement failingSeed = computeFailingSeed.findSeedStatementFailing(pathToStackTrace, slicing);
+			int failingSeedLineNum = computeFailingSeed.computeSeed(pathToStackTrace).getLineNumber();
+			String failingSeedClass = computeFailingSeed.computeSeed(pathToStackTrace).getSeedClass();
+			this.seed = failingSeedClass+":"+failingSeedLineNum;
+			this.seedStatement = failingSeed;
+			listener.getLogger().println("Seed runner: " + this.seed);
+
 			// 3.Backward slicing
-			Collection<? extends Statement> slice = crashFinderImpl
-					.backWardSlicing(seedStatement, slicing, pathToLogSlicing);
-			// listener.getLogger().println("---START DUMP SLICE---");
-			WALAUtils.dumpSlice(new ArrayList<Statement>(slice),
-					new PrintWriter(listener.getLogger()));
-			// listener.getLogger().println("---END DUMP SLICE---");
+			Collection<? extends Statement> slice = slicing.computeSlice(seedStatement);
+			WALAUtils.dumpSliceToFile(new ArrayList<Statement>(slice), pathToLogSlicing);
 
 			// 4. Intersection
-			Collection<Statement> intersection = null;
-			BufferedReader br = null;
-			String sCurrentLine;
-			PrintWriter output = null;
-			List<String> diffClass = new ArrayList<String>();
-			List<String> matching = new ArrayList<String>();
-
-			try {
-				output = new PrintWriter(new BufferedWriter(new FileWriter(
-						pathToLogDiff)));
-				output.write("");
-				br = new BufferedReader(new FileReader(pathToDiffFile));
-				String prefix = crashFinderImpl
-						.getCanonicalPathToWorkspaceDir();
-				while (prefix.endsWith("/")) {
-					prefix = prefix.substring(0, prefix.length() - 1);
-				}
-				// Escape special characters for regex use
-				prefix = Pattern.quote(prefix);
-				// listener.getLogger().println("Prefix: " + prefix);
-				while ((sCurrentLine = br.readLine()) != null) {
-					Pattern p = Pattern.compile("\\+++ " + prefix + "/(.*?)"
-							+ "\\.java");
-					Matcher m = p.matcher(sCurrentLine);
-					if (m.find()) {
-						String strFound = m.group();
-						String absPath = strFound.replace("+", "").trim();
-						File javaFile = new File(absPath);
-						String packageName = new PackageExtractor(javaFile)
-								.extractPackageName();
-						String fileName = javaFile.getName();
-						String fullClassName = packageName + "."
-								+ fileName.substring(0, fileName.length() - 5);
-						matching.add(fullClassName);
-						diffClass.add(fullClassName);
-						// listener.getLogger().println("Class found: " +
-						// fullClassName);
-						output.printf("%s\r\n", strFound);
-					}
-				}
-			} catch (IOException e) {
-				RuntimeException re = new RuntimeException(e);
-				re.setStackTrace(e.getStackTrace());
-				throw e;
-			} finally {
-				if (output != null) {
-					output.close();
-				}
-			}
-
-			listener.getLogger().println("Executing intersection ...");
-			intersection = crashFinderImpl.intersection(matching, slice);
+			listener.getLogger().println("Executing intersection ....");
+			Intersection intersection = new Intersection();
+			List<String> matchingSet = intersection.matchingSet(pathToDiffFile);
+			Collection<Statement> chop = intersection.intersection(matchingSet, slice);
 
 			// 5.Instrument
 			listener.getLogger().println("Executing instrumentation ...");
-			crashFinderImpl.instrument(pathToJar, pathToInstrJar, intersection);
+			InstrumenterMain instrumenter = new InstrumenterMain();
+			instrumenter.instrument(pathToJar, pathToInstrJar, chop);
 
 		} catch (IOException ex) {
 			Logger.getLogger(CrashFinderRunnerFailing.class.getName())
 					.log(Level.SEVERE, null, ex);
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (CancelException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 
 	}

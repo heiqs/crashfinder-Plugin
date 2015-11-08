@@ -1,19 +1,19 @@
 package de.hdu.pvs.crashfinder;
 
 import com.ibm.wala.ipa.slicer.Statement;
+import com.ibm.wala.util.CancelException;
+
+import de.hdu.pvs.crashfinder.analysis.FindPassingSeed;
+import de.hdu.pvs.crashfinder.analysis.Intersection;
 import de.hdu.pvs.crashfinder.analysis.Slicing;
+import de.hdu.pvs.crashfinder.instrument.InstrumenterMain;
 import de.hdu.pvs.crashfinder.util.WALAUtils;
-import de.hdu.pvs.utils.PackageExtractor;
 import hudson.model.BuildListener;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-//import java.util.logging.Level;
-//import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * 
@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
  */
 public class CrashFinderRunnerPassing implements CrashFinderRunner {
 
-	private final JenkinsCrashFinderImplementation crashFinderImpl;
+	private final CrashFinderImplementation crashFinderImpl;
 
 	private Statement seedStatement;
 
@@ -31,7 +31,7 @@ public class CrashFinderRunnerPassing implements CrashFinderRunner {
 	private String seed;
 
 	public CrashFinderRunnerPassing(
-			JenkinsCrashFinderImplementation crashFinderImpl,
+			CrashFinderImplementation crashFinderImpl,
 			BuildListener listener, String seed) {
 		this.crashFinderImpl = crashFinderImpl;
 		this.listener = listener;
@@ -49,18 +49,23 @@ public class CrashFinderRunnerPassing implements CrashFinderRunner {
 			String pathToJar = crashFinderImpl.getPathToJarFile();
 			//String pathToStackTrace = crashFinderImpl.getPathToStackTrace();
 			String pathToDiffFile = crashFinderImpl.getPathToDiffOut();
-			String pathToLogDiff = crashFinderImpl.getPathToLogDiff();
 			String pathToInstrJar = crashFinderImpl
 					.getPathToInstrumentedJarFile();
 			String pathToLogSlicing = crashFinderImpl.getPathToLogSlicing();
+			String pathToExclusionFile = crashFinderImpl.getPathToExclusionFile();
 
 			// 1. Slicing
 			listener.getLogger().println("Initializing slicing ....");
-			Slicing slicing = crashFinderImpl.initializeSlicing(pathToJar);
+			Slicing slicing = crashFinderImpl.initializeSlicing(pathToJar, pathToExclusionFile);
 
+			listener.getLogger().println("Find passing seed statement ....");
 			try {
-				this.seedStatement = crashFinderImpl.findSeedStatementPassing(
-						this.seed, new File(pathToDiffFile), slicing);
+
+				FindPassingSeed computePassingSeed = new FindPassingSeed();
+				String passingSeed = computePassingSeed.computeSeed(this.seed, pathToDiffFile);
+				listener.getLogger().println("passing seed string: "+passingSeed);
+				this.seedStatement = computePassingSeed.findSeedStatement(passingSeed, slicing);
+				listener.getLogger().println("passing seed statement: "+this.seedStatement);
 				this.seed = crashFinderImpl.getSeed();
 			} catch (InterruptedException e1) {
 				// TODO Auto-generated catch block
@@ -68,68 +73,29 @@ public class CrashFinderRunnerPassing implements CrashFinderRunner {
 			}
 
 			// 3.Backward slicing
-			Collection<? extends Statement> slice = crashFinderImpl
-					.backWardSlicing(seedStatement, slicing, pathToLogSlicing);
+			Collection<? extends Statement> slice = slicing.computeSlice(seedStatement);
 			WALAUtils.dumpSliceToFile(new ArrayList<Statement>(slice), pathToLogSlicing);
 
 			// 4. Intersection
-			Collection<Statement> intersection = null;
-			BufferedReader br = null;
-			String sCurrentLine;
-			PrintWriter output = null;
-			List<String> diffClass = new ArrayList<String>();
-			List<String> matching = new ArrayList<String>();
-
-			try {
-				output = new PrintWriter(new BufferedWriter(new FileWriter(
-						pathToLogDiff)));
-				output.write("");
-				br = new BufferedReader(new FileReader(pathToDiffFile));
-				String prefix = crashFinderImpl
-						.getCanonicalPathToWorkspaceDir();
-				while (prefix.endsWith("/")) {
-					prefix = prefix.substring(0, prefix.length() - 1);
-				}
-				
-				// Escape special characters for regex use
-				prefix = Pattern.quote(prefix);
-
-				while ((sCurrentLine = br.readLine()) != null) {
-					Pattern p = Pattern.compile("\\+++ " + prefix + "/(.*?)"
-							+ "\\.java");
-					Matcher m = p.matcher(sCurrentLine);
-					if (m.find()) {
-						String strFound = m.group();
-						String absPath = strFound.replace("+", "").trim();
-						File javaFile = new File(absPath);
-						String packageName = new PackageExtractor(javaFile)
-								.extractPackageName();
-						String fileName = javaFile.getName();
-						String fullClassName = packageName + "."
-								+ fileName.substring(0, fileName.length() - 5);
-						matching.add(fullClassName);
-						diffClass.add(fullClassName);
-						output.printf("%s\r\n", strFound);
-					}
-				}
-			} catch (IOException e) {
-				throw new RuntimeException(e.getMessage(), e);
-			} finally {
-				if (output != null) {
-					output.close();
-				}
-			}
-
 			listener.getLogger().println("Executing intersection ....");
-			intersection = crashFinderImpl.intersection(matching, slice);
+			Intersection intersection = new Intersection();
+			List<String> matchingSet = intersection.matchingSet(pathToDiffFile);
+			Collection<Statement> chop = intersection.intersection(matchingSet, slice);
 
 			// 5. Instrument
 			listener.getLogger().println("Executing instrumentation ...");
-			crashFinderImpl.instrument(pathToJar, pathToInstrJar, intersection);
+			InstrumenterMain instrumenter = new InstrumenterMain();
+			instrumenter.instrument(pathToJar, pathToInstrJar, chop);
 
 		} catch (IOException ex) {
 
 			throw new RuntimeException(ex.getMessage(), ex);
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (CancelException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 
 	}

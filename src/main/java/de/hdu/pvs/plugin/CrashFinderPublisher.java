@@ -3,11 +3,12 @@ package de.hdu.pvs.plugin;
 import com.google.common.base.Joiner;
 import com.ibm.wala.ipa.slicer.Statement;
 
-import de.hdu.pvs.crashfinder.JenkinsCrashFinderImplementation;
+import de.hdu.pvs.crashfinder.CrashFinderImplementation;
 import de.hdu.pvs.crashfinder.CrashFinderRunnerFailing;
 import de.hdu.pvs.crashfinder.CrashFinderRunnerPassing;
+import de.hdu.pvs.crashfinder.analysis.Differencer;
 import de.hdu.pvs.utils.*;
-//import de.uni.heidelberg.CrashFinder.JenkinsCrashFinderRunner;
+
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -338,37 +339,13 @@ public final class CrashFinderPublisher extends Notifier {
 
 			// Execute diff
 			listener.getLogger().println("Execute diff command between two versions ....");
-
-			String pathToDiffOutput = pathToWorkspace + "/tmp-diff.diff";
-			File fileDiffOutput = new File(pathToDiffOutput);
-
-			String regexStartCommandDiff = "diff -ENwbur";
-			
-			String commandDiff = regexStartCommandDiff + " --exclude=\""
-					+ "PASSING\" " + pathToRootPassing + " " + pathToWorkspace
-					+ " > " + pathToWorkspace + "/tmp-diff.diff";
-			// String commandDiff = "diff -ENwbur --exclude=\"" + "PASSING\" " +
-			// pathToRootPassing + " " + pathToWorkspace + " > " +
-			// pathToWorkspace + "/diff.diff";
-
-			CommandInterpreter runner = new Shell(commandDiff);
-			runner.perform(build, launcher, listener);
-
 			String pathToDiffJava = pathToWorkspace + "/diff.diff";
 			File fileDiffJava = new File(pathToDiffJava);
 			if (fileDiffJava.exists() == false) {
 				fileDiffJava.createNewFile();
 			}
-
-			// Only extract diff java
-			String strDiffOutput = DocumentReader.slurpFile(fileDiffOutput);
-			ExtractionDiffJava.extractDiffJavaFile(strDiffOutput, fileDiffJava,
-					regexStartCommandDiff);
-
-			// delete tmp-diff
-			fileDiffOutput.delete();
-			// delete passing version, not needed anymore
-			FileUtils.deleteDirectory(new File(absPathPassingDir));
+			Differencer computeDiff = new Differencer();
+			computeDiff.extractDiffJavaFile(pathToRootPassing, pathToWorkspace, pathToDiffJava);
 
 			CrashFinderGetStackTrace crashFinderImplStackTrace = new CrashFinderGetStackTrace(
 					this.stackTrace, absPathToStackTrace,
@@ -472,7 +449,7 @@ public final class CrashFinderPublisher extends Notifier {
 			// run buglocator on failing version
 			listener.getLogger()
 					.println("Runnig buglocator on failing version");
-			JenkinsCrashFinderImplementation JenkCrashFinderFailing = new JenkinsCrashFinderImplementation(
+			CrashFinderImplementation JenkCrashFinderFailing = new CrashFinderImplementation(
 					pathToDiffJava, pathToLogDiffFailing, pathToStackTrace,
 					absPathJarFailing, pathToInstrJarFailing,
 					pathToLogSlicingFailing, pathToWorkspace, listener, build,
@@ -489,7 +466,7 @@ public final class CrashFinderPublisher extends Notifier {
 			// run buglocator on passing version
 			listener.getLogger().println(
 					"Running buglocator on passing version");
-			JenkinsCrashFinderImplementation JenkinsCrashFinderPassing = new JenkinsCrashFinderImplementation(
+			CrashFinderImplementation JenkinsCrashFinderPassing = new CrashFinderImplementation(
 					pathToDiffJava, pathToLogDiffPassing, pathToStackTrace,
 					absPathJarPassing, pathToInstrJarPassing,
 					pathToLogSlicingPassing, pathToWorkspace, listener, build,
