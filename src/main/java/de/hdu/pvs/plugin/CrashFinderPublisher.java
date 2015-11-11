@@ -173,7 +173,7 @@ public final class CrashFinderPublisher extends Notifier {
                     "CrashFinder: Build was successful, nothing to do.");
             return true;
         } else {
-            CrashFinderCheckInput crashFinderImplException = new CrashFinderCheckInput(
+/*            CrashFinderCheckInput crashFinderImplException = new CrashFinderCheckInput(
                     pathToLogPathDir, pathToJarFailingVersion,
                     pathToJarPassingVersion, this.dependencyPathsFailing,
                     this.dependencyPathsPassing, behaviour, git, svn,
@@ -181,16 +181,41 @@ public final class CrashFinderPublisher extends Notifier {
                     gitNumberCommitBack, svnRevisionNumb, usernameSvn,
                     passwordSvn, usernameSvnCommand, passwordSvnCommand,
                     listener);
-            if (crashFinderImplException.isMissingInformation()) {
+            if (crashFinderImplException.isMissingInformation()) {*/
+        	
+        	CrashFinderInput inputUI = new CrashFinderInput();
+        	inputUI.setBehaviour(behaviour);
+        	inputUI.setCommandCheckOutPassing(commandCheckOutPassing);
+        	inputUI.setFullNameFailedTestClass(fullNameFailedTestClass);
+        	inputUI.setDependencyPathsFailing(dependencyPathsFailing);
+        	inputUI.setDependencyPathsPassing(dependencyPathsPassing);
+        	inputUI.setGit(git);
+        	inputUI.setGitNumberCommitBack(gitNumberCommitBack);
+        	inputUI.setPasswordSvn(passwordSvn);
+        	inputUI.setPasswordSvnCommand(passwordSvnCommand);
+        	inputUI.setPathToJarFailingVersion(pathToJarFailingVersion);
+        	inputUI.setPathToJarPassingVersion(pathToJarPassingVersion);
+        	inputUI.setPathToStackTrace(pathToStackTrace);
+        	inputUI.setPathToLogPathDir(pathToLogPathDir);
+        	inputUI.setPathToSrcFileSystem(pathToSrcFileSystem);
+        	inputUI.setStackTrace(pathToStackTrace);
+        	inputUI.setSvn(passwordSvn);
+        	inputUI.setSvnRevisionNumb(svnRevisionNumb);
+        	inputUI.setUsernameSvn(usernameSvn);
+        	inputUI.setUsernameSvnCommand(usernameSvnCommand);
+        	CrashFinderCheckInput crashFinderImplException = new CrashFinderCheckInput(inputUI,listener);
+        	
+        	if (crashFinderImplException.isMissingInformation() == true) {
                 return true;
             }
 
-            FilePath workspace = build.getWorkspace();
+/*            FilePath workspace = build.getWorkspace();
             if (workspace == null) {
                 throw new RuntimeException("Could not connect to the slave " +
                         "hosting the workspace.");
             }
-            String pathToWorkspace = workspace.getRemote();
+            String pathToWorkspace = workspace.getRemote();*/
+        	String pathToWorkspace = build.getWorkspace().getRemote();
             File fileWorkspace = new File(pathToWorkspace);
             FilePath filePathWorkspace = new FilePath(fileWorkspace);
 
@@ -211,21 +236,42 @@ public final class CrashFinderPublisher extends Notifier {
 
             Collection<String> absPathsToDependenciesFailing = new HashSet<String>();
             Collection<String> absPathsToDependenciesPassing = new HashSet<String>();
-            Filewalker jarWalker = new Filewalker(".jar");
+            //Filewalker jarWalker = new Filewalker(".jar");
+            Filewalker jarWalkerFailing = new Filewalker(".jar");
 
             for (String path : dependencyPathsFailing.split(":")) {
-                absPathsToDependenciesFailing.addAll(Filewalkers
-                        .walkIfDirectory(jarWalker, absolutizer, path));
+/*                absPathsToDependenciesFailing.addAll(Filewalkers
+                        .walkIfDirectory(jarWalker, absolutizer, path));*/
+            	String absPath = absolutizer.absolutize(path);
+            	File absPathFile = new File(absPath);
+            	if (absPathFile.isFile()) {
+            		absPathsToDependenciesFailing.add(absPath);
+            	} else {
+            		absPathsToDependenciesFailing.addAll(jarWalkerFailing.walk(absPath));
+            	}
             }
+            
+            Filewalker jarWalkerPassing = new Filewalker(".jar");
             for (String path : dependencyPathsPassing.split(":")) {
-                absPathsToDependenciesPassing.addAll(Filewalkers
-                        .walkIfDirectory(jarWalker, absolutizer, path));
+/*                absPathsToDependenciesPassing.addAll(Filewalkers
+                        .walkIfDirectory(jarWalker, absolutizer, path));*/
+            	String absPath = absolutizer.absolutize(path);
+            	File absPathFile = new File(absPath);
+            	if (absPathFile.isFile()) {
+            		absPathsToDependenciesPassing.add(absPath);
+            	} else {
+            		absPathsToDependenciesPassing.addAll(jarWalkerPassing.walk(absPath));
+            	}
             }
 
             File logPathFile = new File(absPathLogDir);
             FileUtils.deleteDirectory(logPathFile);
-            FileUtils.forceMkdir(logPathFile);
-
+            //FileUtils.forceMkdir(logPathFile);
+            logPathFile.mkdir();
+            String filenamePassing = "PASSING";
+            String absPathPassingDir = pathToWorkspace + "/" + filenamePassing;
+            File filePassingDir = new File(absPathPassingDir);
+            FilePath filePathPassingDir = new FilePath(filePassingDir);
             // check out passing version
             CrashFinderGetPassingVersion getPassing = new CrashFinderGetPassingVersion(
                     behaviour, git, svn, commandCheckOutPassing,
@@ -241,7 +287,10 @@ public final class CrashFinderPublisher extends Notifier {
                     .println("Execute diff command between two versions ....");
             String pathToDiffJava = pathToWorkspace + "/diff.diff";
             File fileDiffJava = new File(pathToDiffJava);
-            FileUtils.touch(fileDiffJava);
+            //FileUtils.touch(fileDiffJava);
+            if (fileDiffJava.exists() == false) {
+            	fileDiffJava.createNewFile();
+            }
             Differencer computeDiff = new Differencer();
             computeDiff.extractDiffJavaFile(pathToRootPassing, pathToWorkspace,
                     pathToDiffJava);
@@ -256,8 +305,8 @@ public final class CrashFinderPublisher extends Notifier {
             ArrayList<String> listFullnameFailedTest = crashFinderImplStackTrace
                     .getListNameFailedTest();
 
-            if (this.stackTrace.equals("automatically")) {
-                if (listPathToStackTrace.size() == 0
+            if (this.stackTrace.equals("automatically") == true) {
+            	if (listPathToStackTrace.size() == 0
                         || listFullnameFailedTest.size() == 0) {
                     if (listPathToStackTrace.size() == 0) {
                         listener.getLogger()
@@ -303,6 +352,8 @@ public final class CrashFinderPublisher extends Notifier {
             String logInstr = "Instrumentation";
             String pathToLogInstr = logger.createSubdirectory(logInstr);
 
+            // output after executing diff command
+            String absPathToDiffFile = "";
             // Result slicing
             String logSlicing = "Slicing";
             String pathToLogSlicing = logger.createSubdirectory(logSlicing);
@@ -442,10 +493,7 @@ public final class CrashFinderPublisher extends Notifier {
                             return name.startsWith("stmts_dump_");
                         }
                     });
-            if (dumpFileNames == null) {
-                throw new IOException("An error occured while attempting to "
-                        + "find the coverage profiles.");
-            }
+
             Arrays.sort(dumpFileNames);
 
             // find the names of the profiles
@@ -455,19 +503,16 @@ public final class CrashFinderPublisher extends Notifier {
             // coverage for passing
             File passingFile = new File(pathToWorkspace, tmpPass);
             listener.getLogger().println(passingFile);
-            File passingProfile = new File(passingFile.getParentFile(),
-                    "coverage-passing.txt");
-            FileUtils.moveFile(passingFile, passingProfile);
-
+            File passingProfile = new File(passingFile.getParentFile(), "coverage-passing.txt");
+            passingFile.renameTo(passingProfile);
+            
             // coverage for failing
             File failingFile = new File(pathToWorkspace, tmpFail);
             listener.getLogger().println(failingFile);
-            File failingProfile = new File(failingFile.getParentFile(),
-                    "coverage-failing.txt");
-            FileUtils.moveFile(failingFile, failingProfile);
+            File failingProfile = new File(failingFile.getParentFile(), "coverage-failing.txt");
+            failingFile.renameTo(failingProfile);
 
-            File diffCoverageFile = new File(pathToWorkspace,
-                    "diffCoverage.txt");
+            File diffCoverageFile = new File(pathToWorkspace, "diffCoverage.txt");
             ArrayList<String> diffCoverage = new ArrayList<String>();
 
             listener.getLogger().println("find diff coverage");

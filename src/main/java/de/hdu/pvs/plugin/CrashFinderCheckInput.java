@@ -2,6 +2,8 @@ package de.hdu.pvs.plugin;
 
 import hudson.model.BuildListener;
 
+import de.hdu.pvs.plugin.CrashFinderInput;
+
 /**
  * 
  * @author Antsa Harinala Andriamboavonjy Created on October 2015
@@ -9,7 +11,10 @@ import hudson.model.BuildListener;
  */
 public class CrashFinderCheckInput {
 
-	private final String pathToLogPathDir;
+	protected CrashFinderInput inputs = new CrashFinderInput();
+	protected BuildListener listener;
+	
+/*	private final String pathToLogPathDir;
 
 	private final String pathToJarFailingVersion;
 
@@ -71,12 +76,14 @@ public class CrashFinderCheckInput {
 		this.passwordSvnCommand = passwordSvnCommand;
 		this.gitNumberCommitBack = gitNumberCommitBack;
 		this.svnRevisionNumb = svnRevisionNumb;
+*/		
+	public CrashFinderCheckInput(CrashFinderInput inputs, BuildListener listener) {
+		this.inputs = inputs;
 		this.listener = listener;
-
 	}
 
 	public boolean existLogPath() {
-		if (this.pathToLogPathDir.equals("") == true) {
+		if (this.inputs.getPathToLogPathDir().equals("") == true) {
 			return false;
 		} else {
 			return true;
@@ -84,7 +91,7 @@ public class CrashFinderCheckInput {
 	}
 
 	public boolean existPathToJarPassing() {
-		if (this.pathToJarPassingVersion.equals("") == true) {
+		if (this.inputs.getPathToJarPassingVersion().equals("") == true) {
 			return false;
 		} else {
 			return true;
@@ -92,7 +99,7 @@ public class CrashFinderCheckInput {
 	}
 
 	public boolean existPathToJarFailing() {
-		if (this.pathToJarFailingVersion.equals("") == true) {
+		if (this.inputs.getPathToJarFailingVersion().equals("") == true) {
 			return false;
 		} else {
 			return true;
@@ -101,43 +108,43 @@ public class CrashFinderCheckInput {
 
 	public boolean existBehaviourPassingVersion() {
 
-		if (this.behaviour == null) {
+		if (this.inputs.getBehaviour() == null) {
 			return false;
 		} else {
-			if (this.behaviour.equals("Number") == true) {
-				if (this.git.equals("true") == true) {
-					if (this.gitNumberCommitBack.equals("") == true) {
+			if (this.inputs.getBehaviour().equals("Number") == true) {
+				if (this.inputs.getGit().equals("true") == true) {
+					if (this.inputs.getGitNumberCommitBack().equals("") == true) {
 						return false;
 					} else {
 						try {
-							Integer.parseInt(this.gitNumberCommitBack);
+							Integer.parseInt(this.inputs.getGitNumberCommitBack());
 						} catch (NumberFormatException e) {
 							return false;
 						}
 					}
-				} else if (this.svn.equals("true") == true) {
-					if (this.svnRevisionNumb.equals("") == true) {
+				} else if (this.inputs.getSvn().equals("true") == true) {
+					if (this.inputs.getSvnRevisionNumb().equals("") == true) {
 						return false;
 					} else {
 						try {
-							Integer.parseInt(this.svnRevisionNumb);
+							Integer.parseInt(this.inputs.getSvnRevisionNumb());
 						} catch (NumberFormatException e) {
 							return false;
 						}
 					}
 
-				} else if (this.git.equals("true") == false
-						&& this.svn.equals("true") == false) {
+				} else if (this.inputs.getGit().equals("true") == false
+						&& this.inputs.getSvn().equals("true") == false) {
 					return false;
 				}
 
-			} else if (this.behaviour.equals("CommandLine") == true) {
-				if (this.commandCheckOutPassing.equals("") == true) {
+			} else if (this.inputs.getBehaviour().equals("CommandLine") == true) {
+				if (this.inputs.getCommandCheckOutPassing().equals("") == true) {
 					return false;
 				}
 
-			} else if (this.behaviour.equals("Filesystem") == true) {
-				if (this.pathToSrcFileSystem.equals("") == true) {
+			} else if (this.inputs.getBehaviour().equals("Filesystem") == true) {
+				if (this.inputs.getPathToSrcFileSystem().equals("") == true) {
 					return false;
 				}
 			}
@@ -146,14 +153,14 @@ public class CrashFinderCheckInput {
 	}
 
 	public boolean existDependencyPathsFailing() {
-		if (this.dependencyPathsFailing.equals("") == true) {
+		if (this.inputs.getDependencyPathsFailing().equals("") == true) {
 			return false;
 		}
 		return true;
 	}
 
 	public boolean existDependencyPathsPassing() {
-		if (this.dependencyPathsPassing.equals("") == true) {
+		if (this.inputs.getDependencyPathsPassing().equals("") == true) {
 			return false;
 		}
 		return true;
