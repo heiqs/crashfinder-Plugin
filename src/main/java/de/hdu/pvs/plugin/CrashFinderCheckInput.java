@@ -13,70 +13,7 @@ public class CrashFinderCheckInput {
 
 	protected CrashFinderInput inputs = new CrashFinderInput();
 	protected BuildListener listener;
-	
-/*	private final String pathToLogPathDir;
 
-	private final String pathToJarFailingVersion;
-
-	private final String pathToJarPassingVersion;
-
-	private final String dependencyPathsPassing;
-
-	private final String dependencyPathsFailing;
-
-	private final String behaviour;
-
-	private final String git;
-
-	private final String svn;
-
-	private final String commandCheckOutPassing;
-
-	private final String pathToSrcFileSystem;
-
-	private final String gitNumberCommitBack;
-
-	private final String svnRevisionNumb;
-
-	private final String usernameSvn;
-
-	private final String passwordSvn;
-
-	private final String usernameSvnCommand;
-
-	private final String passwordSvnCommand;
-
-	private final BuildListener listener;
-
-	public CrashFinderCheckInput(
-			String pathToLogPathDir,
-			String pathToJarFailingVersion,
-			String pathToJarPassingVersion,
-			// String pathToJarTest,
-			String dependencyPathsFailing, String dependencyPathsPassing,
-			String behaviour, String git, String svn,
-			String commandCheckOutPassing, String pathToSrcFileSystem,
-			String gitNumberCommitBack, String svnRevisionNumb,
-			String usernameSvn, String passwordSvn, String usernameSvnCommand,
-			String passwordSvnCommand, BuildListener listener) {
-		this.behaviour = behaviour;
-		this.pathToJarFailingVersion = pathToJarFailingVersion;
-		this.pathToJarPassingVersion = pathToJarPassingVersion;
-		this.pathToLogPathDir = pathToLogPathDir;
-		// this.pathToJarTest = pathToJarTest;
-		this.dependencyPathsFailing = dependencyPathsFailing;
-		this.dependencyPathsPassing = dependencyPathsPassing;
-		this.git = git;
-		this.svn = svn;
-		this.commandCheckOutPassing = commandCheckOutPassing;
-		this.pathToSrcFileSystem = pathToSrcFileSystem;
-		this.usernameSvn = usernameSvn;
-		this.passwordSvn = passwordSvn;
-		this.usernameSvnCommand = usernameSvnCommand;
-		this.passwordSvnCommand = passwordSvnCommand;
-		this.gitNumberCommitBack = gitNumberCommitBack;
-		this.svnRevisionNumb = svnRevisionNumb;
-*/		
 	public CrashFinderCheckInput(CrashFinderInput inputs, BuildListener listener) {
 		this.inputs = inputs;
 		this.listener = listener;
@@ -165,15 +102,6 @@ public class CrashFinderCheckInput {
 		}
 		return true;
 	}
-
-	// public boolean existPathToTestJar()
-	// {
-	// if(this.pathToJarTest.equals("") == true)
-	// {
-	// return false;
-	// }
-	// return true;
-	// }
 
 	public boolean isMissingInformation() {
 		if (this.existLogPath() == false) {

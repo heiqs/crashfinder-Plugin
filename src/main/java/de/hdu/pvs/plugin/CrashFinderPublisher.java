@@ -1,12 +1,29 @@
 package de.hdu.pvs.plugin;
 
+import hudson.EnvVars;
+import hudson.Extension;
+import hudson.FilePath;
+import hudson.Launcher;
+import hudson.model.BuildListener;
+import hudson.model.Result;
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
+import hudson.model.Descriptor;
+import hudson.tasks.BuildStepDescriptor;
+import hudson.tasks.BuildStepMonitor;
+import hudson.tasks.CommandInterpreter;
+import hudson.tasks.Notifier;
+import hudson.tasks.Publisher;
+import hudson.tasks.Shell;
+
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 
 import net.sf.json.JSONObject;
 
@@ -21,13 +38,10 @@ import de.hdu.pvs.crashfinder.CrashFinderImplementation;
 import de.hdu.pvs.crashfinder.CrashFinderRunnerFailing;
 import de.hdu.pvs.crashfinder.CrashFinderRunnerPassing;
 import de.hdu.pvs.crashfinder.analysis.Differencer;
-import de.hdu.pvs.utils.*;
-import hudson.EnvVars;
-import hudson.Extension;
-import hudson.FilePath;
-import hudson.Launcher;
-import hudson.model.*;
-import hudson.tasks.*;
+import de.hdu.pvs.utils.DocumentReader;
+import de.hdu.pvs.utils.DocumentWriter;
+import de.hdu.pvs.utils.FilePathAbsolutizer;
+import de.hdu.pvs.utils.Filewalker;
 
 /**
  * 
@@ -173,16 +187,6 @@ public final class CrashFinderPublisher extends Notifier {
                     "CrashFinder: Build was successful, nothing to do.");
             return true;
         } else {
-/*            CrashFinderCheckInput crashFinderImplException = new CrashFinderCheckInput(
-                    pathToLogPathDir, pathToJarFailingVersion,
-                    pathToJarPassingVersion, this.dependencyPathsFailing,
-                    this.dependencyPathsPassing, behaviour, git, svn,
-                    commandCheckOutPassing, pathToSrcFileSystem,
-                    gitNumberCommitBack, svnRevisionNumb, usernameSvn,
-                    passwordSvn, usernameSvnCommand, passwordSvnCommand,
-                    listener);
-            if (crashFinderImplException.isMissingInformation()) {*/
-        	
         	CrashFinderInput inputUI = new CrashFinderInput();
         	inputUI.setBehaviour(behaviour);
         	inputUI.setCommandCheckOutPassing(commandCheckOutPassing);
@@ -209,12 +213,6 @@ public final class CrashFinderPublisher extends Notifier {
                 return true;
             }
 
-/*            FilePath workspace = build.getWorkspace();
-            if (workspace == null) {
-                throw new RuntimeException("Could not connect to the slave " +
-                        "hosting the workspace.");
-            }
-            String pathToWorkspace = workspace.getRemote();*/
         	String pathToWorkspace = build.getWorkspace().getRemote();
             File fileWorkspace = new File(pathToWorkspace);
             FilePath filePathWorkspace = new FilePath(fileWorkspace);
@@ -236,12 +234,10 @@ public final class CrashFinderPublisher extends Notifier {
 
             Collection<String> absPathsToDependenciesFailing = new HashSet<String>();
             Collection<String> absPathsToDependenciesPassing = new HashSet<String>();
-            //Filewalker jarWalker = new Filewalker(".jar");
+            
             Filewalker jarWalkerFailing = new Filewalker(".jar");
 
             for (String path : dependencyPathsFailing.split(":")) {
-/*                absPathsToDependenciesFailing.addAll(Filewalkers
-                        .walkIfDirectory(jarWalker, absolutizer, path));*/
             	String absPath = absolutizer.absolutize(path);
             	File absPathFile = new File(absPath);
             	if (absPathFile.isFile()) {
@@ -253,8 +249,6 @@ public final class CrashFinderPublisher extends Notifier {
             
             Filewalker jarWalkerPassing = new Filewalker(".jar");
             for (String path : dependencyPathsPassing.split(":")) {
-/*                absPathsToDependenciesPassing.addAll(Filewalkers
-                        .walkIfDirectory(jarWalker, absolutizer, path));*/
             	String absPath = absolutizer.absolutize(path);
             	File absPathFile = new File(absPath);
             	if (absPathFile.isFile()) {
@@ -266,12 +260,12 @@ public final class CrashFinderPublisher extends Notifier {
 
             File logPathFile = new File(absPathLogDir);
             FileUtils.deleteDirectory(logPathFile);
-            //FileUtils.forceMkdir(logPathFile);
             logPathFile.mkdir();
             String filenamePassing = "PASSING";
             String absPathPassingDir = pathToWorkspace + "/" + filenamePassing;
             File filePassingDir = new File(absPathPassingDir);
             FilePath filePathPassingDir = new FilePath(filePassingDir);
+
             // check out passing version
             CrashFinderGetPassingVersion getPassing = new CrashFinderGetPassingVersion(
                     behaviour, git, svn, commandCheckOutPassing,
@@ -287,7 +281,6 @@ public final class CrashFinderPublisher extends Notifier {
                     .println("Execute diff command between two versions ....");
             String pathToDiffJava = pathToWorkspace + "/diff.diff";
             File fileDiffJava = new File(pathToDiffJava);
-            //FileUtils.touch(fileDiffJava);
             if (fileDiffJava.exists() == false) {
             	fileDiffJava.createNewFile();
             }
@@ -354,6 +347,7 @@ public final class CrashFinderPublisher extends Notifier {
 
             // output after executing diff command
             String absPathToDiffFile = "";
+            
             // Result slicing
             String logSlicing = "Slicing";
             String pathToLogSlicing = logger.createSubdirectory(logSlicing);
@@ -426,7 +420,7 @@ public final class CrashFinderPublisher extends Notifier {
             File junitJarFile = new File(pathToWorkspace, "target/junit.jar");
             File hamcrestJarFile = new File(pathToWorkspace,
                     "target/hamcrest-core.jar");
-            // listener.getLogger().println("Downloading junit and hamcrest");
+
             FileUtils.copyURLToFile(new URL(junitUrl), junitJarFile);
             FileUtils.copyURLToFile(new URL(hamcrestUrl), hamcrestJarFile);
 
@@ -520,73 +514,46 @@ public final class CrashFinderPublisher extends Notifier {
                     .slurpFiles(passingProfile);
             ArrayList<String> failReader = DocumentReader
                     .slurpFiles(failingProfile);
-
-            for (int l = 0; l < passReader.size(); l++) {
-                passReader.set(l,
-                        passReader.get(l)
-                                .replace(
-                                        passReader.get(l)
-                                                .substring(passReader.get(l)
-                                                        .lastIndexOf("#")),
-                                ""));
-            }
-            for (String item : failReader) {
-                String itemNew = item
-                        .replace(item.substring(item.lastIndexOf("#")), "");
-                if (!passReader.contains(itemNew)) {
-                    diffCoverage.add(item);
-                }
-            }
-
-            ArrayList<String> diffCoverageLoc = new ArrayList<String>();
-            File failSliceFile = new File(pathToLogSlicingFailing);
-            ArrayList<String> sliceSetTmp = DocumentReader
-                    .slurpFiles(failSliceFile);
-            List<String> sliceSet = sliceSetTmp.subList(2, sliceSetTmp.size());
-
-            for (String instrument : diffCoverage) {
-                String classInst = instrument.split("\\(")[0];
-                for (String slice : sliceSet) {
-                    Pattern pattern = Pattern
-                            .compile("Node: < Application, L(.*?)\\(");
-                    Matcher matcher = pattern.matcher(slice);
-                    if (matcher.find()) {
-                        String content = (matcher.group(1).split(", ")[0] + "/"
-                                + matcher.group(1).split(", ")[1]).replace("/",
-                                        ".");
-                        if (classInst.equals(content)) {
-                            Pattern pattern1 = Pattern
-                                    .compile("< Application, (.*?) >");
-                            Matcher matcher1 = pattern1.matcher(slice);
-                            if (matcher1.find()) {
-                                String content1 = matcher1.group(1).replace(")",
-                                        "");
-                                List<String> one = Arrays.asList(content1.split(
-                                        "\\s*,\\s*|\\s*;\\s*|\\s*\\(\\s*"));
-                                ;
-
-                                Pattern pattern2 = Pattern
-                                        .compile("#Invoke\\((.*?)\\)#");
-                                Matcher matcher2 = pattern2.matcher(instrument);
-                                if (matcher2.find()) {
-                                    String content2 = matcher2.group(1)
-                                            .replaceAll("[( )]", "");
-                                    List<String> two = Arrays.asList(content2
-                                            .split("\\s*;,\\s*|\\s*,\\s*|\\s*;\\s*"));
-                                    ;
-                                    if (two.containsAll(one)) {
-                                        String lineNum = slice
-                                                .split("line num: ")[1];
-                                        diffCoverageLoc.add((matcher.group(1)
-                                                .split(", ")[0]).replace("/",
-                                                        ".")
-                                                + ":" + lineNum);
-                                    }
-                                }
-                            }
-                        }
+            boolean check = true;
+            for (String fr : failReader) {
+            	String frRegex = fr.split("#")[0]+fr.split("#")[1].split("\\(")[0];
+                for (String pr : passReader) {
+                    check = false;
+                	String prRegex = pr.split("#")[0]+pr.split("#")[1].split("\\(")[0];
+                    if (prRegex.equals(frRegex)) {
+                        check = true;
+                        break;
                     }
                 }
+                if (!check){
+                    check = true;
+                    diffCoverage.add(fr);
+                    System.out.println(fr);
+                }
+            }
+            ArrayList<String> diffCoverageLoc = new ArrayList<String>();
+            File shrikeFailing = new File(pathToWorkspace,
+                    "shrikeDump_failing.txt");
+            File shrikePassing = new File(pathToWorkspace,
+                    "shrikeDump_passing.txt");
+            
+            ArrayList<String> failingShrikeReader = DocumentReader
+                    .slurpFiles(shrikeFailing);
+            ArrayList<String> passingShrikeReader = DocumentReader
+                    .slurpFiles(shrikePassing);
+            for (String item: diffCoverage){
+            	String classInst = item.split("\\(")[0];
+            	String instIndex = item.substring(item.lastIndexOf("#") + 1).trim();
+            	for (String failSh: failingShrikeReader){
+            		String shIndex = failSh.split("instruction index: ")[1].split(" ", 2)[0];
+            		String shClass = failSh.split(" @ ")[1].split("\\(")[0];
+            		String lineNum = failSh.split("line num: ")[1].split(" @ ")[0];
+            		if (classInst.equals(shClass) && instIndex.equals(shIndex)){
+                        System.out.println(classInst + ":" + lineNum);
+            			diffCoverageLoc.add(classInst + ":" + lineNum);
+            			continue;
+            		}
+            	}
             }
 
             File diffCoverageLocFile = new File(pathToWorkspace,

@@ -1,49 +1,26 @@
 package de.hdu.pvs.plugin;
 
-import java.util.*;
-import java.io.*;
-
 public class CrashFinderInput {
 	
 	private String pathToLogPathDir = "";
-
 	private String pathToJarFailingVersion = "";
-
 	private String pathToJarPassingVersion = "";
-
 	private String dependencyPathsPassing = "";
-
 	private String dependencyPathsFailing = "";
-
 	private String behaviour = "";
-
 	private String git = "";
-
 	private String svn = "";
-
 	private String commandCheckOutPassing = "";
-
 	private String pathToSrcFileSystem  = "";
-
 	private String gitNumberCommitBack = "";
-
 	private String svnRevisionNumb = "";
-
 	private String usernameSvn = "";
-
 	private String passwordSvn = "";
-
 	private String usernameSvnCommand = "";
-
 	private String passwordSvnCommand = "";
-
 	private String stackTrace ="";
-
 	private String pathToStackTrace ="";
-
-	private String fullNameFailedTestClass =""; // fullNameFailedTestClass
-	
-	
+	private String fullNameFailedTestClass ="";
 	
 	public void setPathToLogPathDir(String pathToLogPathDir)
 	{
@@ -134,14 +111,11 @@ public class CrashFinderInput {
 	{
 		this.pathToStackTrace = pathToStackTrace;
 	}
-
 	
 	public void setFullNameFailedTestClass(String fullNameFailedTestClass)
 	{
 		this.fullNameFailedTestClass = fullNameFailedTestClass;
 	}
-	
-	
 		
 	public String getPathToLogPathDir()
 	{
@@ -218,27 +192,23 @@ public class CrashFinderInput {
 		return this.usernameSvnCommand;
 	}
 
-		public String getPasswordSvnCommand()
-		{
-			return this.passwordSvnCommand;
-		}
+	public String getPasswordSvnCommand()
+	{
+		return this.passwordSvnCommand;
+	}
 
-		public String getStackTrace()
-		{
-			return this.stackTrace;
-		}
+	public String getStackTrace()
+	{
+		return this.stackTrace;
+	}
 
-		public String getPathToStackTrace()
-		{
-			return pathToStackTrace ;
-		}
-
-		
-		public String getFullNameFailedTestClass()
-		{
-			return fullNameFailedTestClass;
-		}
-		
-		
-
+	public String getPathToStackTrace()
+	{
+		return pathToStackTrace ;
+	}
+	
+	public String getFullNameFailedTestClass()
+	{
+		return fullNameFailedTestClass;
+	}
 }
