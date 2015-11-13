@@ -53,17 +53,17 @@ public class CrashFinderGetPassingVersion implements FilePath.FileCallable {
 
 	private BuildListener listener;
 
-	// variable contains authentification data when using subVersion
+	// variable contains authentication data when using subVersion
 	private String usernameSvn;
 
-	// variable contains authentification data when using subVersion
+	// variable contains authentication data when using subVersion
 	private String passwordSvn;
 
-	// variable contains authentification data when doing check out of the
+	// variable contains authentication data when doing check out of the
 	// project using shell command.
 	private String usernameSvnCommand;
 
-	// variable contains authentification data when doing check out of the
+	// variable contains authentication data when doing check out of the
 	// project using shell command.
 	private String passwordSvnCommand;
 
@@ -97,7 +97,6 @@ public class CrashFinderGetPassingVersion implements FilePath.FileCallable {
 		this.passwordSvn = passwordSvn;
 		this.usernameSvnCommand = usernameSvnCommand;
 		this.passwordSvnCommand = passwordSvnCommand;
-
 	}
 
 	public String getPathToPassing() {

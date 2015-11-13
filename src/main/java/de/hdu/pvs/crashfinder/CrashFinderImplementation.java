@@ -1,9 +1,21 @@
 package de.hdu.pvs.crashfinder;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+
+import com.ibm.wala.ipa.slicer.Statement;
 import com.ibm.wala.ipa.slicer.Slicer.ControlDependenceOptions;
 import com.ibm.wala.ipa.slicer.Slicer.DataDependenceOptions;
 
+import de.hdu.pvs.crashfinder.analysis.IRStatement;
+import de.hdu.pvs.crashfinder.analysis.Intersection;
+import de.hdu.pvs.crashfinder.analysis.ShrikePoint;
 import de.hdu.pvs.crashfinder.analysis.Slicing;
+import de.hdu.pvs.crashfinder.analysis.SlicingOutput;
+import de.hdu.pvs.crashfinder.util.Files;
+import de.hdu.pvs.crashfinder.util.Globals;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
@@ -15,36 +27,23 @@ import hudson.model.BuildListener;
 public class CrashFinderImplementation{
 
 	private String canonicalPathToWorkspaceDir;
-
 	private String pathToDiffOut;
-
-	private String pathToLogDiff;
-
 	private final String pathToExclusionFile = "resources/JavaAllExclusions.txt";
-
 	private String pathToStackTrace;
-
 	private String pathToJarFile;
-
 	private String pathToInstrumentedJarFile;
-
 	private String pathToLogSlicing;
-
 	private BuildListener listener;
-
 	private AbstractBuild<?, ?> build;
-
 	private Launcher launcher;
-
 	private String seed = "";
 
 	public CrashFinderImplementation(String pathToDiffOut,
-			String pathToLogDiff, String pathToStackTrace,
+			String pathToStackTrace,
 			String pathToJarFile, String pathToInstrumentedJarFile,
 			String pathToLogSlicing, String canonicalPathToWorkspaceDir,
 			BuildListener listener, AbstractBuild<?, ?> build, Launcher launcher) {
 		this.pathToDiffOut = pathToDiffOut;
-		this.pathToLogDiff = pathToLogDiff;
 		this.pathToJarFile = pathToJarFile;
 		this.pathToInstrumentedJarFile = pathToInstrumentedJarFile;
 		this.pathToStackTrace = pathToStackTrace;
@@ -53,7 +52,6 @@ public class CrashFinderImplementation{
 		this.setListener(listener);
 		this.setBuild(build);
 		this.setLauncher(launcher);
-
 	}
 
 	public String getSeed() {
@@ -66,10 +64,6 @@ public class CrashFinderImplementation{
 
 	public String getPathToDiffOut() {
 		return this.pathToDiffOut;
-	}
-
-	public String getPathToLogDiff() {
-		return this.pathToLogDiff;
 	}
 
 	public String getPathToJarFile() {
@@ -94,10 +88,6 @@ public class CrashFinderImplementation{
 
 	public void setPathToDiffOut(String pathToDiffOut) {
 		this.pathToDiffOut = pathToDiffOut;
-	}
-
-	public void setPathToLogDiff(String pathToLogDiff) {
-		this.pathToLogDiff = pathToLogDiff;
 	}
 
 	public void setPathToJarFile(String pathToJarFile) {
@@ -150,5 +140,28 @@ public class CrashFinderImplementation{
 		slicing.setContextSensitive(true); // context-insensitive
 		return slicing;
 
+	}
+	
+	public Collection<Statement> intersection(String pathToDiffFile, Collection<? extends Statement> slice){
+		Intersection intersection = new Intersection();
+		List<String> matchingSet = intersection.matchingSet(pathToDiffFile);
+		Collection<Statement> chop = intersection.intersection(matchingSet, slice);
+		return chop;
+	}
+	
+	public void shrikeWriter(String pathToWorkspace, Collection<Statement> chop, File shrikeDump){
+		Collection<IRStatement> irs = Slicing.convert(chop);
+		SlicingOutput output = new SlicingOutput(irs);
+		StringBuilder sb = new StringBuilder();
+		for (ShrikePoint po: output.getAllShrikePoints()) {
+			sb.append(po);
+			sb.append(Globals.lineSep);
+		}
+		try {
+			System.out.println("Write to file: " + shrikeDump);
+			Files.writeToFile(sb.toString(), shrikeDump);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }

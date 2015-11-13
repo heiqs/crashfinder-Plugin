@@ -7,5 +7,5 @@ package de.hdu.pvs.crashfinder;
 public interface CrashFinderRunner {
 
 	public void runner();
-
+	
 }

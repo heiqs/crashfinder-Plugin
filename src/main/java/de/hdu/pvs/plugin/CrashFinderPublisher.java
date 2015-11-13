@@ -176,7 +176,8 @@ public final class CrashFinderPublisher extends Notifier {
         return this.fullNameFailedTestClass;
     }
 
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher,
             BuildListener listener) throws IOException, InterruptedException {
 
@@ -264,7 +265,7 @@ public final class CrashFinderPublisher extends Notifier {
             String filenamePassing = "PASSING";
             String absPathPassingDir = pathToWorkspace + "/" + filenamePassing;
             File filePassingDir = new File(absPathPassingDir);
-            FilePath filePathPassingDir = new FilePath(filePassingDir);
+            new FilePath(filePassingDir);
 
             // check out passing version
             CrashFinderGetPassingVersion getPassing = new CrashFinderGetPassingVersion(
@@ -310,7 +311,6 @@ public final class CrashFinderPublisher extends Notifier {
                     }
                     return true;
                 }
-
             }
 
             for (int i = 0; i < listPathToStackTrace.size(); i++) {
@@ -319,7 +319,7 @@ public final class CrashFinderPublisher extends Notifier {
             }
 
             for (int j = 0; j < listFullnameFailedTest.size(); j++) {
-                listener.getLogger().println("Full name failed test class: "
+                listener.getLogger().println("Failed test class: "
                         + listFullnameFailedTest.get(j));
             }
 
@@ -345,9 +345,6 @@ public final class CrashFinderPublisher extends Notifier {
             String logInstr = "Instrumentation";
             String pathToLogInstr = logger.createSubdirectory(logInstr);
 
-            // output after executing diff command
-            String absPathToDiffFile = "";
-            
             // Result slicing
             String logSlicing = "Slicing";
             String pathToLogSlicing = logger.createSubdirectory(logSlicing);
@@ -357,11 +354,6 @@ public final class CrashFinderPublisher extends Notifier {
                     pathToLogSlicing, filenameSlicingPassing);
             String pathToLogSlicingFailing = logger.createFileInSubdirectory(
                     pathToLogSlicing, filenameSlicingFailing);
-
-            String pathToLogDiffPassing = logger.createFileInSubdirectory(
-                    absPathDiffLog, "log-diff-passing.txt");
-            String pathToLogDiffFailing = logger.createFileInSubdirectory(
-                    absPathDiffLog, "log-diff-failing.txt");
 
             String nameInstrJarPassing = new File(absPathJarPassing).getName()
                     .replace(".jar", "-passing-instr.jar");
@@ -381,9 +373,9 @@ public final class CrashFinderPublisher extends Notifier {
 
             // run buglocator on failing version
             listener.getLogger()
-                    .println("Runnig buglocator on failing version");
+                    .println("Runnig crashFinder on failing version");
             CrashFinderImplementation JenkCrashFinderFailing = new CrashFinderImplementation(
-                    pathToDiffJava, pathToLogDiffFailing, pathToStackTrace,
+                    pathToDiffJava, pathToStackTrace,
                     absPathJarFailing, pathToInstrJarFailing,
                     pathToLogSlicingFailing, pathToWorkspace, listener, build,
                     launcher);
@@ -395,13 +387,13 @@ public final class CrashFinderPublisher extends Notifier {
             Statement failingSeedStatement = runnerFailing.getSeedStatement();
             listener.getLogger().println("Seed: " + seed);
             listener.getLogger()
-                    .println("Seed Statement: " + failingSeedStatement);
+                    .println("Failing seed Statement: " + failingSeedStatement);
 
             // run buglocator on passing version
             listener.getLogger()
-                    .println("Running buglocator on passing version");
+                    .println("Running crashFinder on passing version");
             CrashFinderImplementation JenkinsCrashFinderPassing = new CrashFinderImplementation(
-                    pathToDiffJava, pathToLogDiffPassing, pathToStackTrace,
+                    pathToDiffJava, pathToStackTrace,
                     absPathJarPassing, pathToInstrJarPassing,
                     pathToLogSlicingPassing, pathToWorkspace, listener, build,
                     launcher);
@@ -480,6 +472,7 @@ public final class CrashFinderPublisher extends Notifier {
                     .readFileToString(new File(absPathToJunitOutputFailing)));
 
             // collect the coverage profiles from workspace directory
+            listener.getLogger().println("Find diff coverage");
             String[] dumpFileNames = new File(pathToWorkspace)
                     .list(new FilenameFilter() {
                         @Override
@@ -496,72 +489,34 @@ public final class CrashFinderPublisher extends Notifier {
 
             // coverage for passing
             File passingFile = new File(pathToWorkspace, tmpPass);
-            listener.getLogger().println(passingFile);
             File passingProfile = new File(passingFile.getParentFile(), "coverage-passing.txt");
             passingFile.renameTo(passingProfile);
+            listener.getLogger().println("Passing coverage path: " + passingProfile);
             
             // coverage for failing
             File failingFile = new File(pathToWorkspace, tmpFail);
-            listener.getLogger().println(failingFile);
             File failingProfile = new File(failingFile.getParentFile(), "coverage-failing.txt");
             failingFile.renameTo(failingProfile);
+            listener.getLogger().println("Failing coverage path: " + failingProfile);
 
             File diffCoverageFile = new File(pathToWorkspace, "diffCoverage.txt");
-            ArrayList<String> diffCoverage = new ArrayList<String>();
-
-            listener.getLogger().println("find diff coverage");
-            ArrayList<String> passReader = DocumentReader
-                    .slurpFiles(passingProfile);
-            ArrayList<String> failReader = DocumentReader
-                    .slurpFiles(failingProfile);
-            boolean check = true;
-            for (String fr : failReader) {
-            	String frRegex = fr.split("#")[0]+fr.split("#")[1].split("\\(")[0];
-                for (String pr : passReader) {
-                    check = false;
-                	String prRegex = pr.split("#")[0]+pr.split("#")[1].split("\\(")[0];
-                    if (prRegex.equals(frRegex)) {
-                        check = true;
-                        break;
-                    }
-                }
-                if (!check){
-                    check = true;
-                    diffCoverage.add(fr);
-                    System.out.println(fr);
-                }
-            }
-            ArrayList<String> diffCoverageLoc = new ArrayList<String>();
             File shrikeFailing = new File(pathToWorkspace,
                     "shrikeDump_failing.txt");
             File shrikePassing = new File(pathToWorkspace,
                     "shrikeDump_passing.txt");
-            
-            ArrayList<String> failingShrikeReader = DocumentReader
-                    .slurpFiles(shrikeFailing);
-            ArrayList<String> passingShrikeReader = DocumentReader
-                    .slurpFiles(shrikePassing);
-            for (String item: diffCoverage){
-            	String classInst = item.split("\\(")[0];
-            	String instIndex = item.substring(item.lastIndexOf("#") + 1).trim();
-            	for (String failSh: failingShrikeReader){
-            		String shIndex = failSh.split("instruction index: ")[1].split(" ", 2)[0];
-            		String shClass = failSh.split(" @ ")[1].split("\\(")[0];
-            		String lineNum = failSh.split("line num: ")[1].split(" @ ")[0];
-            		if (classInst.equals(shClass) && instIndex.equals(shIndex)){
-                        System.out.println(classInst + ":" + lineNum);
-            			diffCoverageLoc.add(classInst + ":" + lineNum);
-            			continue;
-            		}
-            	}
-            }
-
             File diffCoverageLocFile = new File(pathToWorkspace,
                     "diffCoverageLoc.txt");
-
+            
+    		ArrayList<String> passReader = DocumentReader
+    				.slurpFiles(passingProfile);
+    		ArrayList<String> failReader = DocumentReader
+    				.slurpFiles(failingProfile);
+            CrashFinderResult result = new CrashFinderResult();
+            ArrayList<String> diffCoverage = result.CrashFinderDifferencer(passReader, failReader);
+            ArrayList<String> diffCoverageLoc = result.CrashFinderMapper(shrikePassing, shrikeFailing, diffCoverage);
             DocumentWriter.writeArrayDocument(diffCoverage, diffCoverageFile);
-            DocumentWriter.writeArrayDocument(diffCoverageLoc,
-                    diffCoverageLocFile);
+            DocumentWriter.writeArrayDocument(diffCoverageLoc, diffCoverageLocFile);
+            
             // move profiles to the result directory
             build.addAction(new CrashFinderShowDumpsAction(diffCoverageLoc,
                     diffCoverage, failReader, passReader));

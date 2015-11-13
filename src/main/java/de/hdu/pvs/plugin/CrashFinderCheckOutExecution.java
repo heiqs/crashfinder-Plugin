@@ -19,6 +19,11 @@ import hudson.tasks.Shell;
  */
 public class CrashFinderCheckOutExecution implements FileCallable<Object> {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1973847243457921720L;
+
 	private String commandCheckOut;
 
 	private AbstractBuild<?, ?> build;

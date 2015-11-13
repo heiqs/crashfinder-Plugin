@@ -1,26 +1,19 @@
 package de.hdu.pvs.crashfinder;
 
+import hudson.model.BuildListener;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+
 import com.ibm.wala.ipa.slicer.Statement;
 import com.ibm.wala.util.CancelException;
 
 import de.hdu.pvs.crashfinder.analysis.FindFailingSeed;
-import de.hdu.pvs.crashfinder.analysis.IRStatement;
-import de.hdu.pvs.crashfinder.analysis.Intersection;
-import de.hdu.pvs.crashfinder.analysis.ShrikePoint;
 import de.hdu.pvs.crashfinder.analysis.Slicing;
-import de.hdu.pvs.crashfinder.analysis.SlicingOutput;
 import de.hdu.pvs.crashfinder.instrument.InstrumenterMain;
-import de.hdu.pvs.crashfinder.util.Files;
-import de.hdu.pvs.crashfinder.util.Globals;
 import de.hdu.pvs.crashfinder.util.WALAUtils;
-import hudson.model.BuildListener;
-
-import java.io.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 
 /**
@@ -31,11 +24,8 @@ import java.util.logging.Logger;
 public class CrashFinderRunnerFailing implements CrashFinderRunner {
 
 	private final CrashFinderImplementation crashFinderImpl;
-
 	private BuildListener listener;
-
 	private String seed = null;
-
 	private Statement seedStatement = null;
 
 	public CrashFinderRunnerFailing(
@@ -55,7 +45,6 @@ public class CrashFinderRunnerFailing implements CrashFinderRunner {
 	public void runner() {
 
 		try {
-
 			String pathToJar = crashFinderImpl.getPathToJarFile();
 			String pathToStackTrace = crashFinderImpl.getPathToStackTrace();
 			String pathToDiffFile = crashFinderImpl.getPathToDiffOut();
@@ -66,62 +55,41 @@ public class CrashFinderRunnerFailing implements CrashFinderRunner {
 			String pathToWorkspace = crashFinderImpl.getCanonicalPathToWorkspaceDir();
 
 			// 1. Slicing
-			listener.getLogger().println("Initializing slicing ....");
+			listener.getLogger().println("Initializing slicing for failing version ....");
 			Slicing slicing = crashFinderImpl.initializeSlicing(pathToJar, pathToExclusionFile);
 
+			// 2. Finding failing seed statement
 			listener.getLogger().println("Find failing seed statement ....");
 			FindFailingSeed computeFailingSeed = new FindFailingSeed();
-			listener.getLogger().println("stack: "+pathToStackTrace);
-			
+			listener.getLogger().println("StackTrace path: "+pathToStackTrace);
 			Statement failingSeed = computeFailingSeed.findSeedStatementFailing(pathToStackTrace, slicing);
 			int failingSeedLineNum = computeFailingSeed.computeSeed(pathToStackTrace).getLineNumber();
 			String failingSeedClass = computeFailingSeed.computeSeed(pathToStackTrace).getSeedClass();
 			this.seed = failingSeedClass+":"+failingSeedLineNum;
 			this.seedStatement = failingSeed;
-			listener.getLogger().println("Seed runner: " + this.seed);
 
 			// 3.Backward slicing
 			Collection<? extends Statement> slice = slicing.computeSlice(seedStatement);
 			WALAUtils.dumpSliceToFile(new ArrayList<Statement>(slice), pathToLogSlicing);
 
 			// 4. Intersection
-			listener.getLogger().println("Executing intersection ....");
-			Intersection intersection = new Intersection();
-			List<String> matchingSet = intersection.matchingSet(pathToDiffFile);
-			Collection<Statement> chop = intersection.intersection(matchingSet, slice);
-			Collection<IRStatement> irs = Slicing.convert(chop);
-			SlicingOutput output = new SlicingOutput(irs);
-			System.out.println("Workspace Path: " + pathToWorkspace);
-
-			StringBuilder sb = new StringBuilder();
-			for (ShrikePoint po: output.getAllShrikePoints()) {
-				sb.append(po);
-				sb.append(Globals.lineSep);
-			}
-			try {
-				//String shrikeDump = "shrikeDump_failing.txt";
-	            File shrikeDump = new File(pathToWorkspace, "shrikeDump_failing.txt");
-				System.out.println("Write to file: " + shrikeDump);
-				Files.writeToFile(sb.toString(), shrikeDump);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			listener.getLogger().println("Executing intersection for failing version ....");
+            File shrikeDump = new File(pathToWorkspace, "shrikeDump_failing.txt");
+			Collection<Statement> chop = crashFinderImpl.intersection(pathToDiffFile, slice);
+			crashFinderImpl.shrikeWriter(pathToWorkspace, chop, shrikeDump);
 			
 			// 5.Instrument
-			listener.getLogger().println("Executing instrumentation ...");
+			listener.getLogger().println("Executing instrumentation for failing version ...");
 			InstrumenterMain instrumenter = new InstrumenterMain();
 			instrumenter.instrument(pathToJar, pathToInstrJar, chop);
-
-		} catch (IOException ex) {
-			Logger.getLogger(CrashFinderRunnerFailing.class.getName())
-					.log(Level.SEVERE, null, ex);
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			
 		} catch (CancelException e) {
-			// TODO Auto-generated catch block
+			listener.getLogger().println("Error: in computing backward slice for failing version");
 			e.printStackTrace();
-		}
+		} catch (IOException e) {
+			listener.getLogger().println("Error: in computing failing seed statement");
+			e.printStackTrace();
+		} 
 
 	}
 
