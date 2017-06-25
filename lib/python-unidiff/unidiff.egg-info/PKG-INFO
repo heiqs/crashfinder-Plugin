@@ -1,0 +1,11 @@
+Metadata-Version: 1.0
+Name: unidiff
+Version: 0.1
+Summary: Unified diff parsing library.
+Home-page: http://github.com/matiasb/python-unidiff
+Author: Matias Bordese
+Author-email: mbordese@gmail.com
+License: GPL-3
+Description: UNKNOWN
+Keywords: unified diff parse
+Platform: UNKNOWN

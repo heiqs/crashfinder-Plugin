@@ -1,0 +1,13 @@
+setup.py
+unidiff/__init__.py
+unidiff/parser.py
+unidiff/patch.py
+unidiff/utils.py
+unidiff.egg-info/PKG-INFO
+unidiff.egg-info/SOURCES.txt
+unidiff.egg-info/dependency_links.txt
+unidiff.egg-info/top_level.txt
+unidiff/tests/__init__.py
+unidiff/tests/test_hunks.py
+unidiff/tests/test_parser.py
+unidiff/tests/test_patchedfile.py
