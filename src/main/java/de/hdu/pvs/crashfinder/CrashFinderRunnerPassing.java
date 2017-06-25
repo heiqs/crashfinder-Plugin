@@ -57,12 +57,12 @@ public class CrashFinderRunnerPassing implements CrashFinderRunner {
 
 			// 2. Finding passing seed statement
 			listener.getLogger().println("Find passing seed statement ....");
-			listener.getLogger().println("Failing seed statemen" + this.seed);
 			listener.getLogger().println("DiffFilePath" + pathToDiffFile);
 			FindPassingSeed computePassingSeed = new FindPassingSeed();
 			String passingSeed = computePassingSeed.computeSeed(this.seed, pathToDiffFile);
+			listener.getLogger().println("Passing seed statement" + passingSeed);
 			this.seedStatement = computePassingSeed.findSeedStatement(passingSeed, slicing);
-			listener.getLogger().println("Passing seed statement: " + this.seedStatement);
+			listener.getLogger().println("Passing seed source line: " + this.seedStatement);
 			this.seed = crashFinderImpl.getSeed();
 			
 
