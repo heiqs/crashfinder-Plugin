@@ -30,6 +30,10 @@ A Jenkins plugin for debugging of regression errors in continuous integration te
 
 9. Use the reports from crashFinder in jenkins and also genereted files from jenkins build
 
+##Jenkins plugins dependencies
+	
+- Parameterized Trigger plugin
+
 License
 ---------
 MIT License, see `license.txt` for more information.
