@@ -21,7 +21,8 @@ A Jenkins plugin for debugging of regression errors in continuous integration te
 
 5. Upload crashFinder.hpi from crashfinder-plugin/target in jenkins
 
-6. Download and install python package "unidiff-0.1"
+6. Install python package "unidiff-0.1" from lib/dist/
+	sudo easy_install unidiff-0.1-py2.7.egg
 
 7. Configure a job in jenkins with needed parameters
 
